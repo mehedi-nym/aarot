@@ -1,0 +1,69 @@
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Bengali:wght@400;500;600;700;800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color: #172217;
+  background:
+    radial-gradient(circle at top left, rgba(126, 197, 141, 0.16), transparent 32%),
+    radial-gradient(circle at bottom right, rgba(245, 171, 53, 0.12), transparent 28%),
+    #fff6ea;
+  font-family: 'Noto Sans Bengali', sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at top left, rgba(126, 197, 141, 0.16), transparent 32%),
+    radial-gradient(circle at bottom right, rgba(245, 171, 53, 0.12), transparent 28%),
+    #fff6ea;
+  color: #172217;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+input,
+select,
+textarea,
+button {
+  font: inherit;
+}
+
+.glass-panel {
+  background: rgba(255, 255, 255, 0.78);
+  backdrop-filter: blur(16px);
+}
+
+.section-shell {
+  @apply rounded-[28px] border border-white/60 bg-white/80 shadow-soft;
+}
+
+.field-base {
+  @apply w-full rounded-2xl border border-brand-100 bg-white px-4 py-3 text-sm text-ink outline-none transition placeholder:text-brand-300 focus:border-brand-400 focus:ring-2 focus:ring-brand-100;
+}
+
+.btn-primary {
+  @apply inline-flex items-center justify-center rounded-full bg-brand-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-brand-700 disabled:cursor-not-allowed disabled:bg-brand-200;
+}
+
+.btn-secondary {
+  @apply inline-flex items-center justify-center rounded-full border border-brand-200 bg-white px-5 py-3 text-sm font-semibold text-brand-700 transition hover:border-brand-400 hover:text-brand-800;
+}
+
+.surface-muted {
+  @apply rounded-3xl border border-brand-100 bg-brand-50/80;
+}
