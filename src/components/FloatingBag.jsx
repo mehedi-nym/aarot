@@ -5,6 +5,7 @@ import { formatBanglaCurrency } from '../lib/utils';
 function FloatingBag({ onClick }) {
   const { totalItems, subtotal } = useCart();
 
+
   return (
     <div className="fixed bottom-6 right-6 z-[100]">
       <motion.button

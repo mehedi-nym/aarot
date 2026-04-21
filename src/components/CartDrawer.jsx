@@ -1,6 +1,6 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { useCart } from '../hooks/useCart';
-import { formatBanglaCurrency } from '../lib/utils';
+import { formatBanglaCurrency, getSellTypeMeta } from '../lib/utils';
 import { useNavigate } from 'react-router-dom';
 
 function CartDrawer({ isOpen, onClose }) {
@@ -100,7 +100,9 @@ function CartDrawer({ isOpen, onClose }) {
                             <h4 className="font-bold text-slate-800 text-sm truncate">{item.name_bn}</h4>
                             <p className="text-emerald-600 font-black text-base">
                               {formatBanglaCurrency(item.price)} 
-                              <span className="text-slate-400 text-[10px] font-medium ml-1">x{item.quantity}</span>
+                              <span className="text-slate-400 text-[10px] font-medium ml-1">
+                                  x{item.quantity} {getSellTypeMeta(item.sell_type).label}
+                              </span>
                             </p>
                           </div>
 
@@ -120,7 +122,7 @@ function CartDrawer({ isOpen, onClose }) {
                     <div className="mt-4 pt-4 border-t-2 border-dashed border-slate-200 flex-shrink-0">
                       <div className="flex justify-between items-center mb-4 px-1">
                         <span className="text-slate-500 font-bold text-xs uppercase">মোট পণ্য মূল্য </span>
-                        <span className="text-3xl font-black text-slate-900 tracking-tighter">
+                        <span className="text-3xl font-black text-emerald-600 tracking-tighter">
                           {formatBanglaCurrency(subtotal)}
                         </span>
                       </div>
