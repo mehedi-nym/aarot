@@ -10,20 +10,29 @@ import {
 
 function TrackOrderPage() {
   const { findOrder, submitting, error } = useOrders();
-  const [phone, setPhone] = useState('');
+  const [phone, setPhone] = useState(() => {
+  return localStorage.getItem('track_phone') || '';
+});
   const [orders, setOrders] = useState([]);
   const [hasSearched, setHasSearched] = useState(false);
 
   const handleTrack = async (e) => {
-    e.preventDefault();
-    // We pass only the phone to get the full history
-    const data = await findOrder({ phone });
-    
-    // Ensure data is an array for mapping
-    const results = Array.isArray(data) ? data : data ? [data] : [];
-    setOrders(results);
-    setHasSearched(true);
-  };
+  e.preventDefault();
+
+  localStorage.setItem('track_phone', phone);
+
+  const data = await findOrder({ phone });
+
+  let results = Array.isArray(data) ? data : data ? [data] : [];
+
+  // ✅ Sort latest first
+  results = results.sort(
+    (a, b) => new Date(b.created_at) - new Date(a.created_at)
+  );
+
+  setOrders(results);
+  setHasSearched(true);
+};
 
   return (
     <div className="min-h-screen bg-[#F9FAFB] px-4 py-12 md:py-20">

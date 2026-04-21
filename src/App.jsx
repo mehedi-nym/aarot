@@ -1,6 +1,6 @@
 import { Navigate, Route, Routes } from 'react-router-dom';
 import AppShell from './components/layout/AppShell';
-import AdminGuard from './components/admin/AdminGuard';
+import AdminProtectedRoute from './components/AdminProtectedRoute';
 import AdminDashboardPage from './pages/AdminDashboardPage';
 import AdminLoginPage from './pages/AdminLoginPage';
 import CheckoutPage from './pages/CheckoutPage';
@@ -25,9 +25,9 @@ function App() {
   <Route
     path="/admin"
     element={
-      <AdminGuard>
+      <AdminProtectedRoute>
         <AdminDashboardPage />
-      </AdminGuard>
+      </AdminProtectedRoute>
     }
   />
   <Route path="*" element={<Navigate to="/" replace />} />

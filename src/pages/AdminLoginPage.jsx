@@ -1,25 +1,64 @@
 import { useState } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { signInAdmin } from '../lib/queries';
-import { hasSupabaseEnv } from '../lib/supabase';
 
 function AdminLoginPage() {
   const navigate = useNavigate();
-  const location = useLocation();
+
   const [form, setForm] = useState({
     email: '',
     password: '',
   });
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
   const handleSubmit = async (event) => {
     event.preventDefault();
+
     try {
       setLoading(true);
       setError('');
-      await signInAdmin(form);
-      navigate(location.state?.from || '/admin');
+
+      const DEV_EMAIL = 'admin@aarot.com';
+      const DEV_PASSWORD = '123456';
+
+      // ✅ DEV BYPASS LOGIN (FAST MODE)
+      if (
+        form.email === DEV_EMAIL &&
+        form.password === DEV_PASSWORD
+      ) {
+        localStorage.setItem(
+          'admin_auth',
+          JSON.stringify({
+            email: form.email,
+            role: 'admin',
+            loginTime: Date.now(),
+          })
+        );
+
+        navigate('/admin', { replace: true });
+        return;
+      }
+
+      // ✅ REAL LOGIN (Supabase or API)
+      const user = await signInAdmin(form);
+
+      if (user) {
+        localStorage.setItem(
+          'admin_auth',
+          JSON.stringify({
+            email: form.email,
+            role: 'admin',
+            loginTime: Date.now(),
+          })
+        );
+
+        navigate('/admin', { replace: true });
+      } else {
+        throw new Error('লগইন ব্যর্থ হয়েছে');
+      }
+
     } catch (loginError) {
       setError(loginError.message || 'লগইন করা যায়নি');
     } finally {
@@ -28,41 +67,61 @@ function AdminLoginPage() {
   };
 
   return (
-    <div className="mx-auto max-w-xl px-4 py-12 sm:px-6 lg:px-8">
+    <div className="mx-auto max-w-xl px-4 py-12">
       <section className="section-shell p-6 md:p-8">
-        <p className="text-sm font-semibold uppercase tracking-[0.24em] text-brand-600">
+
+        <h2 className="text-3xl font-extrabold text-ink">
           অ্যাডমিন লগইন
-        </p>
-        <h2 className="mt-3 text-3xl font-extrabold text-ink">অর্ডার ও সেটিংস কন্ট্রোল করুন</h2>
-        <p className="mt-3 text-sm leading-7 text-brand-700">
-          {hasSupabaseEnv
-            ? 'Supabase Auth দিয়ে কেবল admin user-রাই এই প্যানেলে ঢুকতে পারবে।'
-            : 'ডেমো মোডে আছেন। Supabase env যোগ করলে বাস্তব admin auth চালু হবে।'}
+        </h2>
+
+        <p className="mt-3 text-sm text-brand-700">
+          Admin panel access
         </p>
 
         <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
+
           <input
             type="email"
             className="field-base"
             placeholder="admin@email.com"
             value={form.email}
-            onChange={(event) => setForm((prev) => ({ ...prev, email: event.target.value }))}
+            onChange={(e) =>
+              setForm((prev) => ({
+                ...prev,
+                email: e.target.value,
+              }))
+            }
+            required
           />
+
           <input
             type="password"
             className="field-base"
-            placeholder="পাসওয়ার্ড"
+            placeholder="Password"
             value={form.password}
-            onChange={(event) => setForm((prev) => ({ ...prev, password: event.target.value }))}
+            onChange={(e) =>
+              setForm((prev) => ({
+                ...prev,
+                password: e.target.value,
+              }))
+            }
+            required
           />
+
           {error && (
-            <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">
+            <div className="text-red-600 text-sm font-bold">
               {error}
             </div>
           )}
-          <button type="submit" className="btn-primary w-full" disabled={loading}>
+
+          <button
+            type="submit"
+            disabled={loading}
+            className="btn-primary w-full"
+          >
             {loading ? 'লগইন হচ্ছে...' : 'লগইন করুন'}
           </button>
+
         </form>
       </section>
     </div>

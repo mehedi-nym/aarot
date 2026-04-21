@@ -22,6 +22,11 @@ function CheckoutForm({
             আপনার তথ্য সঠিকভাবে দিন। অর্ডার দ্রুত প্রসেস করা হবে।
           </p>
         </div>
+        {form.name && (
+  <p className="text-xs text-green-600 font-bold mt-2">
+    ✔ আপনার তথ্য সংরক্ষিত আছে
+  </p>
+)}
 
         {/* Name + Phone */}
         <div className="grid gap-4 md:grid-cols-2">
@@ -40,6 +45,8 @@ function CheckoutForm({
             <span className="text-sm font-semibold text-brand-700">ফোন</span>
             <input
               required
+              type="tel"
+              pattern="01[0-9]{9}"
               className="field-base"
               value={form.phone}
               onChange={(e) => onChange('phone', e.target.value)}
@@ -69,10 +76,12 @@ function CheckoutForm({
             ডেলিভারি এরিয়া
           </span>
           <select
+            required
             className="field-base"
             value={form.area}
             onChange={(e) => onChange('area', e.target.value)}
           >
+            <option value="">এরিয়া নির্বাচন করুন</option>
             {AREA_OPTIONS.map((area) => (
               <option key={area.slug} value={area.slug}>
                 {area.name}
@@ -81,7 +90,7 @@ function CheckoutForm({
           </select>
         </label>
 
-        {/* Payment Method (UPGRADED UX) */}
+        {/* Payment Method */}
         <div className="space-y-3">
           <span className="text-sm font-semibold text-brand-700">
             পেমেন্ট মেথড
@@ -108,7 +117,7 @@ function CheckoutForm({
           </div>
         </div>
 
-        {/* bKash Card (MATCHED WITH ORDER SUMMARY STYLE) */}
+        {/* bKash Section */}
         {form.paymentMethod === 'bkash' && (
           <div className="rounded-[1.5rem] border border-slate-100 bg-slate-50/60 p-5 space-y-4">
             

@@ -22,7 +22,7 @@ function AppShell({ children }) {
             </div>
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.28em] text-brand-600">
-                Aarot
+                LIVE
               </p>
               <h1 className="text-xl font-extrabold text-ink">আড়ৎ</h1>
             </div>
@@ -50,7 +50,7 @@ function AppShell({ children }) {
             to="/checkout"
             className="inline-flex items-center gap-2 rounded-full bg-ink px-4 py-2.5 text-sm font-semibold text-white"
           >
-            <span>কার্ট</span>
+            <span>বাজারের ব্যাগ</span>
             <span className="rounded-full bg-white/20 px-2 py-0.5 text-xs">
               {formatBanglaNumber(totalItems)}
             </span>
