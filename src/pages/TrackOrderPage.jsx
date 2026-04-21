@@ -1,139 +1,105 @@
 import { useState } from 'react';
 import OrderStatusBadge from '../components/OrderStatusBadge';
 import { useOrders } from '../hooks/useOrders';
-import {
-  formatBanglaCurrency,
-  formatBanglaDate,
-  formatBanglaDateTime,
-  formatBanglaNumber,
+import { Link } from 'react-router-dom';
+import { 
+  formatBanglaCurrency, 
+  formatBanglaDateTime, 
+  formatBanglaNumber 
 } from '../lib/utils';
 
 function TrackOrderPage() {
   const { findOrder, submitting, error } = useOrders();
-  const [form, setForm] = useState({
-    orderCode: '',
-    phone: '',
-  });
-  const [order, setOrder] = useState(null);
-  const [notFound, setNotFound] = useState(false);
+  const [phone, setPhone] = useState('');
+  const [orders, setOrders] = useState([]);
+  const [hasSearched, setHasSearched] = useState(false);
 
-  const handleSubmit = async (event) => {
-    event.preventDefault();
-    const result = await findOrder({
-      orderCode: form.orderCode,
-      phone: form.phone,
-    });
-    setOrder(result);
-    setNotFound(!result);
+  const handleTrack = async (e) => {
+    e.preventDefault();
+    // We pass only the phone to get the full history
+    const data = await findOrder({ phone });
+    
+    // Ensure data is an array for mapping
+    const results = Array.isArray(data) ? data : data ? [data] : [];
+    setOrders(results);
+    setHasSearched(true);
   };
 
   return (
-    <div className="mx-auto max-w-5xl space-y-6 px-4 py-8 sm:px-6 lg:px-8">
-      <section className="section-shell p-6 md:p-8">
-        <div className="grid gap-6 md:grid-cols-[1fr,1.15fr]">
-          <div className="space-y-4">
-            <p className="text-sm font-semibold uppercase tracking-[0.24em] text-brand-600">
-              অর্ডার ট্র্যাকিং
-            </p>
-            <h2 className="text-3xl font-extrabold leading-tight text-ink">
-              আপনার অর্ডারের বর্তমান অবস্থা দেখুন
-            </h2>
-            <p className="text-sm leading-7 text-brand-700">
-              অর্ডার কোড আর ফোন নম্বর দিলে status, custom message, delivery date সব দেখাবে।
-            </p>
-          </div>
+    <div className="min-h-screen bg-[#F9FAFB] px-4 py-12 md:py-20">
+      <div className="mx-auto max-w-2xl">
+        
+        {/* Search Header */}
+        <div className="mb-12">
+          <h2 className="text-4xl font-black text-slate-900 tracking-tighter mb-2">আমার অর্ডার</h2>
+          <p className="text-slate-500 font-medium">আপনার ফোন নম্বর দিয়ে সব অর্ডারের আপডেট জানুন</p>
+        </div>
 
-          <form className="space-y-4" onSubmit={handleSubmit}>
-            <input
-              required
-              className="field-base"
-              placeholder="অর্ডার কোড"
-              value={form.orderCode}
-              onChange={(event) => setForm((prev) => ({ ...prev, orderCode: event.target.value }))}
+        {/* Minimal Search Input */}
+        <form onSubmit={handleTrack} className="mb-12">
+          <div className="group relative bg-white p-2 rounded-[2rem] shadow-xl shadow-slate-200/50 flex items-center border border-transparent focus-within:border-indigo-500 transition-all">
+            <input 
+              type="tel" required placeholder="ফোন নম্বর (01XXXXXXXXX)"
+              className="flex-grow bg-transparent h-14 pl-6 text-lg font-bold text-slate-800 outline-none"
+              value={phone} onChange={(e) => setPhone(e.target.value)}
             />
-            <input
-              required
-              className="field-base"
-              placeholder="ফোন নম্বর"
-              value={form.phone}
-              onChange={(event) => setForm((prev) => ({ ...prev, phone: event.target.value }))}
-            />
-            <button type="submit" className="btn-primary w-full" disabled={submitting}>
-              {submitting ? 'খোঁজা হচ্ছে...' : 'অর্ডার দেখুন'}
+            <button className="bg-slate-900 text-white h-14 px-8 rounded-[1.7rem] font-black text-sm hover:bg-indigo-600 transition-colors active:scale-95">
+              {submitting ? '...' : 'অর্ডার দেখুন'}
             </button>
-          </form>
-        </div>
-      </section>
+          </div>
+          {error && <p className="mt-4 ml-4 text-xs font-bold text-red-500 uppercase tracking-widest">⚠️ {error}</p>}
+        </form>
 
-      {error && (
-        <div className="rounded-3xl border border-red-200 bg-red-50 px-5 py-4 text-sm text-red-600">
-          {error}
-        </div>
-      )}
+        {/* Results Section */}
+        <div className="space-y-6">
+          {hasSearched && orders.length === 0 && (
+            <div className="text-center py-20 bg-white rounded-[3rem] border border-slate-100">
+              <p className="text-slate-400 font-bold italic">এই নাম্বারে কোনো অর্ডার পাওয়া যায়নি</p>
+            </div>
+          )}
 
-      {notFound && !order && (
-        <div className="section-shell p-8 text-center text-brand-700">
-          মিলিয়ে কোনো অর্ডার পাওয়া যায়নি।
-        </div>
-      )}
-
-      {order && (
-        <section className="section-shell p-6 md:p-8">
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-            <div className="space-y-3">
-              <div className="flex flex-wrap items-center gap-3">
-                <h3 className="text-2xl font-bold text-ink">{order.order_code}</h3>
+          {orders.map((order) => (
+            <div key={order.id} className="bg-white p-6 md:p-8 rounded-[2.5rem] border border-slate-100 shadow-sm overflow-hidden transition-transform active:scale-[0.99]">
+              <div className="flex justify-between items-start mb-6">
+                <div>
+                  <span className="text-[10px] font-black text-indigo-500 uppercase tracking-widest block mb-1">Order Code</span>
+                  <h4 className="text-xl font-black text-slate-900 leading-none tracking-tight">#{order.order_code}</h4>
+                </div>
                 <OrderStatusBadge status={order.status} />
               </div>
-              <p className="text-sm text-brand-700">
-                অর্ডারের সময়: {formatBanglaDateTime(order.created_at)}
-              </p>
-              <p className="text-sm text-brand-700">
-                ডেলিভারি তারিখ: {formatBanglaDate(order.delivery_date)}
-              </p>
-            </div>
 
-            <div className="rounded-3xl bg-brand-50 px-5 py-4">
-              <p className="text-sm text-brand-700">মোট পরিশোধযোগ্য</p>
-              <p className="mt-1 text-3xl font-extrabold text-ink">
-                {formatBanglaCurrency(order.total_amount)}
-              </p>
-            </div>
-          </div>
-
-          <div className="mt-6 grid gap-4 lg:grid-cols-[1.2fr,0.8fr]">
-            <div className="surface-muted p-5">
-              <p className="text-sm font-semibold text-brand-700">অর্ডার আইটেম</p>
-              <div className="mt-4 space-y-3">
-                {(order.order_items || order.items || []).map((item) => (
-                  <div
-                    key={item.id || `${item.product_name_bn}-${item.quantity}`}
-                    className="flex items-center justify-between rounded-2xl bg-white px-4 py-3 text-sm"
-                  >
-                    <span>
-                      {item.product_name_bn} x {formatBanglaNumber(item.quantity)}
-                    </span>
-                    <span>{formatBanglaCurrency(item.line_total)}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="space-y-4">
-              <div className="surface-muted p-5">
-                <p className="text-sm font-semibold text-brand-700">ডেলিভারি ঠিকানা</p>
-                <p className="mt-2 leading-7 text-ink">{order.address_bn}</p>
-              </div>
-              <div className="surface-muted p-5">
-                <p className="text-sm font-semibold text-brand-700">অ্যাডমিন মেসেজ</p>
-                <p className="mt-2 leading-7 text-ink">
-                  {order.status_message_bn || 'এখনও কোনো অতিরিক্ত মেসেজ দেওয়া হয়নি।'}
+              {/* Status Message Bubble */}
+              <div className="mb-6 p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">সর্বশেষ আপডেট</p>
+                <p className="text-sm font-bold text-slate-700">
+                  {order.status_message_bn || 'আপনার অর্ডারটি প্রক্রিয়াধীন রয়েছে।'}
                 </p>
               </div>
+
+              <div className="flex justify-between items-end border-t border-slate-50 pt-6">
+                <div className="space-y-1">
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">তারিখ</p>
+                  <p className="text-xs font-bold text-slate-600">{formatBanglaDateTime(order.created_at)}</p>
+                </div>
+                {/* THIS IS THE LINK */}
+      <Link 
+        to={`/track/${order.order_code}`} 
+        className="text-xs font-black text-indigo-600 hover:underline uppercase tracking-widest"
+      >
+        বিস্তারিত দেখুন →
+      </Link>
+
+                <div className="text-right">
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">মোট পরিশোধযোগ্য</p>
+                  <p className="text-2xl font-black text-indigo-600 tracking-tighter leading-none">
+                    {formatBanglaCurrency(order.total_amount)}
+                  </p>
+                </div>
+              </div>
             </div>
-          </div>
-        </section>
-      )}
+          ))}
+        </div>
+      </div>
     </div>
   );
 }
