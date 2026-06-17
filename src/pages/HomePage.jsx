@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import CategoryTabs from '../components/CategoryTabs';
 import DeliveryBanner from '../components/DeliveryBanner';
 import ProductCard from '../components/ProductCard';
+import MixPackBuilder from '../components/MixPackBuilder';
 import StickyCartBar from '../components/StickyCartBar';
 import FloatingBag from '../components/FloatingBag.jsx';
 import CartDrawer from '../components/CartDrawer.jsx';
@@ -13,7 +14,7 @@ import { useProducts } from '../hooks/useProducts';
 
 function HomePage() {
   const [activeCategory, setActiveCategory] = useState('all');
-  const { categories, todaysProducts, settings, loading } =
+  const { categories, todaysProducts, allTodaysProducts, settings, loading } =
     useProducts(activeCategory);
 
   const [isNextDay, setIsNextDay] = useState(false);
@@ -191,6 +192,11 @@ const animateFly = (start, end, image) => {
             </div>
           )}
         </section>
+
+        <MixPackBuilder
+          products={allTodaysProducts}
+          onFly={handleFly}
+        />
 
         {/* --- ABOUT / BUSINESS MODEL --- */} <section className="grid lg:grid-cols-2 gap-8 py-12 border-t border-slate-100"> <div className="bg-emerald-50 rounded-[2.5rem] p-10"> <h4 className="text-2xl font-black text-emerald-900 mb-4">আমাদের বিজনেস মডেল</h4> <p className="text-emerald-800 leading-relaxed opacity-80"> আমরা কোনো খুচরা দোকান বা প্রথাগত শপ নই। প্রতিদিন দুপুর ১২টার মধ্যে পাওয়া অর্ডারগুলো আমরা সরাসরি আড়ৎ থেকে পাইকারিভাবে সংগ্রহ করি। এরপর আপনার যতটুকু প্রয়োজন, ঠিক ততটুকু নির্ভুল পরিমাপে প্রস্তুত করে আপনার ঠিকানায় পৌঁছে দিই। ফলে আপনি পান একদম তাজা পণ্য-আর তাও পাইকারি দামে। </p> <div className="mt-8 grid grid-cols-2 gap-4"> <div className="bg-white/50 p-4 rounded-2xl font-bold text-emerald-900 text-sm italic">✓ নো মিডলম্যান</div> <div className="bg-white/50 p-4 rounded-2xl font-bold text-emerald-900 text-sm italic">✓ ডিজিটাল ওজন</div> </div> </div> <div className="bg-slate-50 rounded-[2.5rem] p-10 flex flex-col justify-center"> <h4 className="text-xl font-bold text-slate-900 mb-2">পেমেন্ট ও সাপোর্ট</h4> <p className="text-slate-500 text-sm mb-6">নিরাপদ পেমেন্ট এবং দ্রুত সাপোর্টের জন্য আমরা আছি আপনার পাশে।</p> <div className="space-y-3"> <div className="flex justify-between items-center bg-white p-4 rounded-2xl border border-slate-200"> <span className="font-bold">বিকাশ (Personal)</span> <span className="font-mono font-black text-emerald-600">{settings?.bkash_number}</span> </div> <div className="flex justify-between items-center bg-white p-4 rounded-2xl border border-slate-200"> <span className="font-bold">ডেলিভারি চার্জ</span> <span className="font-black text-slate-900">৳{settings?.base_delivery_charge}</span> </div> </div> </div> </section>
       </div>

@@ -70,10 +70,17 @@ export function useProducts(activeCategory = 'all') {
     [filteredProducts],
   );
 
+  const allTodaysProducts = useMemo(
+    () => products.filter((product) => product.available_today && product.is_available),
+    [products],
+  );
+
   return {
     categories,
     products: filteredProducts,
+    allProducts: products,
     todaysProducts,
+    allTodaysProducts,
     settings,
     loading,
     error,

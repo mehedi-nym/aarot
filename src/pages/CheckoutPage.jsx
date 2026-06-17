@@ -172,8 +172,10 @@ function CheckoutPage() {
       status: 'pending',
       status_message_bn: 'আপনার অর্ডার গ্রহণ করা হয়েছে।',
       items: items.map((item) => ({
-        product_id: item.id,
-        product_name_bn: item.name_bn,
+        product_id: item.is_custom_mix ? null : item.id,
+        product_name_bn: item.mix_details_bn
+          ? `${item.name_bn} - ${item.mix_details_bn}`
+          : item.name_bn,
         sell_type: item.sell_type,
         unit_price: item.price,
         quantity: item.quantity,

@@ -98,6 +98,11 @@ function CartDrawer({ isOpen, onClose }) {
                           
                           <div className="flex-grow min-w-0">
                             <h4 className="font-bold text-slate-800 text-sm truncate">{item.name_bn}</h4>
+                            {item.mix_details_bn && (
+                              <p className="text-[10px] text-slate-500 font-semibold leading-4 mt-1 line-clamp-2">
+                                {item.mix_details_bn}
+                              </p>
+                            )}
                             <p className="text-emerald-600 font-black text-base">
                               {formatBanglaCurrency(item.price)} 
                               <span className="text-slate-400 text-[10px] font-medium ml-1">

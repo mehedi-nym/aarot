@@ -58,6 +58,11 @@ function OrderSummaryCard({
                 <p className="font-bold text-slate-800 text-sm leading-tight">
                   {item.name_bn}
                 </p>
+                {item.mix_details_bn && (
+                  <p className="mt-1 text-[10px] font-semibold leading-4 text-slate-500">
+                    {item.mix_details_bn}
+                  </p>
+                )}
                 <p className="text-xs text-slate-500 font-bold mt-1">
                   {item.quantity}{' '}
                   {getSellTypeMeta(item.sell_type).shortLabel} x{' '}
