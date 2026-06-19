@@ -4,8 +4,7 @@ import { formatBanglaNumber } from '../../lib/utils';
 
 const navItems = [
   { to: '/', label: 'আজকের বাজার' },
-  { to: '/track', label: 'অর্ডার ট্র্যাক' },
-  { to: '/admin', label: 'অ্যাডমিন' },
+  { to: '/track', label: 'অর্ডার ট্র্যাক' }
 ];
 
 function AppShell({ children }) {
