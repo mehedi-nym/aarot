@@ -30,16 +30,38 @@ const CUT_OPTIONS = [
   },
 ];
 
-const getPricePerKg = (product) => {
+const getMixUnitMeta = (product) => {
   const price = Number(product.price || 0);
   const sellType = product.sell_type;
 
-  if (sellType === 'gram') {
-    const baseGrams = Number(product.minimum_quantity || getSellTypeMeta('gram').min);
-    return baseGrams > 0 ? (price / baseGrams) * 1000 : price;
+  if (sellType === 'piece') {
+    return {
+      mode: 'piece',
+      unitPrice: price,
+      unitLabel: 'টি',
+      min: 1,
+      step: 1,
+    };
   }
 
-  return price;
+  if (sellType === 'gram') {
+    const baseGrams = Number(product.minimum_quantity || getSellTypeMeta('gram').min);
+    return {
+      mode: 'gram',
+      unitPrice: baseGrams > 0 ? (price / baseGrams) * 1000 : price,
+      unitLabel: 'গ্রাম',
+      min: MIN_ITEM_GRAMS,
+      step: 100,
+    };
+  }
+
+  return {
+    mode: 'gram',
+    unitPrice: price,
+    unitLabel: 'গ্রাম',
+    min: MIN_ITEM_GRAMS,
+    step: 100,
+  };
 };
 
 function MixPackBuilder({ products = [], onFly }) {
@@ -62,16 +84,19 @@ function MixPackBuilder({ products = [], onFly }) {
     () =>
       vegetableProducts
         .map((product) => {
-          const grams = Number(selected[product.id] || 0);
-          if (grams < MIN_ITEM_GRAMS) return null;
+          const quantity = Number(selected[product.id] || 0);
+          const unitMeta = getMixUnitMeta(product);
+          if (quantity < unitMeta.min) return null;
 
-          const pricePerKg = getPricePerKg(product);
-          const lineTotal = (pricePerKg * grams) / 1000;
+          const lineTotal =
+            unitMeta.mode === 'piece'
+              ? unitMeta.unitPrice * quantity
+              : (unitMeta.unitPrice * quantity) / 1000;
 
           return {
             product,
-            grams,
-            pricePerKg,
+            quantity,
+            unitMeta,
             lineTotal,
           };
         })
@@ -80,21 +105,34 @@ function MixPackBuilder({ products = [], onFly }) {
   );
 
   const selectedCut = CUT_OPTIONS.find((option) => option.id === cutSize) || CUT_OPTIONS[0];
-  const totalGrams = selectedLines.reduce((sum, line) => sum + line.grams, 0);
+  const totalGrams = selectedLines.reduce(
+    (sum, line) => (line.unitMeta.mode === 'gram' ? sum + line.quantity : sum),
+    0
+  );
+  const totalPieces = selectedLines.reduce(
+    (sum, line) => (line.unitMeta.mode === 'piece' ? sum + line.quantity : sum),
+    0
+  );
   const vegetableTotal = selectedLines.reduce((sum, line) => sum + line.lineTotal, 0);
   const totalPrice = Math.round(vegetableTotal + selectedCut.fee);
   const canAdd = selectedLines.length > 0 && totalGrams <= MAX_TOTAL_GRAMS;
+  const totalSummary = [
+    totalGrams ? `${formatBanglaNumber(totalGrams)} গ্রাম` : '',
+    totalPieces ? `${formatBanglaNumber(totalPieces)} টি` : '',
+  ]
+    .filter(Boolean)
+    .join(' + ');
 
-  const updateGrams = (productId, grams) => {
+  const updateQuantity = (productId, quantity, min) => {
     setSelected((current) => {
       const next = { ...current };
 
-      if (grams < MIN_ITEM_GRAMS) {
+      if (quantity < min) {
         delete next[productId];
         return next;
       }
 
-      next[productId] = grams;
+      next[productId] = quantity;
       return next;
     });
   };
@@ -103,7 +141,7 @@ function MixPackBuilder({ products = [], onFly }) {
     if (!canAdd) return;
 
     const description = selectedLines
-      .map((line) => `${line.product.name_bn} ${line.grams} গ্রাম`)
+      .map((line) => `${line.product.name_bn} ${line.quantity} ${line.unitMeta.unitLabel}`)
       .join(', ');
 
     const mixItem = {
@@ -117,7 +155,7 @@ function MixPackBuilder({ products = [], onFly }) {
       price: totalPrice,
       quantity: 1,
       is_custom_mix: true,
-      mix_details_bn: `${description} | কাট: ${selectedCut.label} | মোট: ${totalGrams} গ্রাম`,
+      mix_details_bn: `${description} | কাট: ${selectedCut.label} | মোট: ${totalSummary}`,
     };
 
     const rect = event.currentTarget.getBoundingClientRect();
@@ -151,7 +189,7 @@ function MixPackBuilder({ products = [], onFly }) {
 
           <div className="mt-6 grid grid-cols-3 gap-2 text-center">
             <div className="rounded-2xl bg-white/10 p-3">
-              <p className="text-lg font-black">২০০g</p>
+              <p className="text-lg font-black">২০০g/১টি</p>
               <p className="text-[10px] font-bold text-emerald-100">মিনিমাম</p>
             </div>
             <div className="rounded-2xl bg-white/10 p-3">
@@ -168,15 +206,24 @@ function MixPackBuilder({ products = [], onFly }) {
         <div className="space-y-5 p-5 md:p-6">
           <div className="grid gap-3 sm:grid-cols-2">
             {vegetableProducts.map((product) => {
-              const grams = Number(selected[product.id] || 0);
-              const pricePerKg = getPricePerKg(product);
-              const lineTotal = Math.round((pricePerKg * grams) / 1000);
+              const quantity = Number(selected[product.id] || 0);
+              const unitMeta = getMixUnitMeta(product);
+              const isSelected = quantity >= unitMeta.min;
+              const unitText = unitMeta.mode === 'piece' ? 'পিস' : 'কেজি';
+              const valueText = quantity
+                ? `${formatBanglaNumber(quantity)} ${unitMeta.unitLabel}`
+                : 'নিন';
+              const lineTotal = Math.round(
+                unitMeta.mode === 'piece'
+                  ? unitMeta.unitPrice * quantity
+                  : (unitMeta.unitPrice * quantity) / 1000
+              );
 
               return (
                 <div
                   key={product.id}
                   className={`rounded-2xl border p-3 transition ${
-                    grams >= MIN_ITEM_GRAMS
+                    isSelected
                       ? 'border-emerald-300 bg-emerald-50/70'
                       : 'border-slate-100 bg-slate-50/60'
                   }`}
@@ -192,7 +239,7 @@ function MixPackBuilder({ products = [], onFly }) {
                         {product.name_bn}
                       </p>
                       <p className="text-xs font-bold text-slate-500">
-                        {formatBanglaCurrency(pricePerKg)} / কেজি
+                        {formatBanglaCurrency(unitMeta.unitPrice)} / {unitText}
                       </p>
                     </div>
                   </div>
@@ -202,17 +249,29 @@ function MixPackBuilder({ products = [], onFly }) {
                       <button
                         type="button"
                         className="px-3 py-2 text-base font-black text-slate-600"
-                        onClick={() => updateGrams(product.id, Math.max(0, grams - 100))}
+                        onClick={() =>
+                          updateQuantity(
+                            product.id,
+                            Math.max(0, quantity - unitMeta.step),
+                            unitMeta.min
+                          )
+                        }
                       >
                         -
                       </button>
                       <span className="min-w-20 text-center text-xs font-black text-slate-900">
-                        {grams ? `${formatBanglaNumber(grams)} গ্রাম` : 'নিন'}
+                        {valueText}
                       </span>
                       <button
                         type="button"
                         className="px-3 py-2 text-base font-black text-slate-600"
-                        onClick={() => updateGrams(product.id, grams ? grams + 100 : MIN_ITEM_GRAMS)}
+                        onClick={() =>
+                          updateQuantity(
+                            product.id,
+                            quantity ? quantity + unitMeta.step : unitMeta.min,
+                            unitMeta.min
+                          )
+                        }
                       >
                         +
                       </button>
@@ -221,6 +280,11 @@ function MixPackBuilder({ products = [], onFly }) {
                       {formatBanglaCurrency(lineTotal)}
                     </p>
                   </div>
+                  {unitMeta.mode === 'piece' && (
+                    <p className="mt-2 text-[10px] font-bold text-amber-600">
+                      এই পণ্যটি পিস হিসেবে যোগ হবে, গ্রাম হিসেবে নয়।
+                    </p>
+                  )}
                 </div>
               );
             })}
@@ -253,7 +317,7 @@ function MixPackBuilder({ products = [], onFly }) {
             <div className="flex items-center justify-between gap-4">
               <div>
                 <p className="text-xs font-bold text-slate-400">
-                  মোট {formatBanglaNumber(totalGrams)} গ্রাম
+                  মোট {totalSummary || '০ গ্রাম'}
                 </p>
                 <p className="mt-1 text-2xl font-black text-emerald-300">
                   {formatBanglaCurrency(totalPrice)}
