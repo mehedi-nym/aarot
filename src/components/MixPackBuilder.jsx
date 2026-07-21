@@ -64,10 +64,11 @@ const getMixUnitMeta = (product) => {
   };
 };
 
-function MixPackBuilder({ products = [], onFly }) {
+function MixPackBuilder({ products = [], settings, onFly }) {
   const { addItem } = useCart();
   const [selected, setSelected] = useState({});
   const [cutSize, setCutSize] = useState(CUT_OPTIONS[0].id);
+  const isMixPackEnabled = settings?.mix_pack_enabled !== false;
 
   const vegetableProducts = useMemo(
     () =>
@@ -115,7 +116,8 @@ function MixPackBuilder({ products = [], onFly }) {
   );
   const vegetableTotal = selectedLines.reduce((sum, line) => sum + line.lineTotal, 0);
   const totalPrice = Math.round(vegetableTotal + selectedCut.fee);
-  const canAdd = selectedLines.length > 0 && totalGrams <= MAX_TOTAL_GRAMS;
+  const canAdd =
+    isMixPackEnabled && selectedLines.length > 0 && totalGrams <= MAX_TOTAL_GRAMS;
   const totalSummary = [
     totalGrams ? `${formatBanglaNumber(totalGrams)} গ্রাম` : '',
     totalPieces ? `${formatBanglaNumber(totalPieces)} টি` : '',
@@ -329,9 +331,14 @@ function MixPackBuilder({ products = [], onFly }) {
                 onClick={handleAddMix}
                 className="rounded-2xl bg-white px-5 py-3 text-sm font-black text-slate-900 transition hover:bg-emerald-100 disabled:cursor-not-allowed disabled:bg-slate-700 disabled:text-slate-400"
               >
-                ব্যাগে রাখুন
+                {isMixPackEnabled ? 'ব্যাগে রাখুন' : 'সার্ভিসটি সাময়িকভাবে বন্ধ'}
               </button>
             </div>
+            {!isMixPackEnabled && (
+              <p className="mt-3 rounded-2xl bg-amber-500/10 px-4 py-3 text-xs font-bold leading-5 text-amber-200">
+                রেডি টু কুক মিক্স প্যাক সার্ভিসটি এখন সাময়িকভাবে বন্ধ আছে। খুব শিগগিরই আবার চালু হবে।
+              </p>
+            )}
             {totalGrams > MAX_TOTAL_GRAMS && (
               <p className="mt-3 text-xs font-bold text-red-300">
                 একটি মিক্স প্যাকে সর্বোচ্চ ২ কেজি নেয়া যাবে।

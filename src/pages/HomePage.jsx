@@ -16,6 +16,10 @@ function HomePage() {
   const [activeCategory, setActiveCategory] = useState('all');
   const { categories, todaysProducts, allTodaysProducts, settings, loading } =
     useProducts(activeCategory);
+  const activeCategoryName =
+    activeCategory === 'all'
+      ? 'এই'
+      : categories.find((category) => category.id === activeCategory)?.name_bn || 'এই';
 
   const [isNextDay, setIsNextDay] = useState(false);
   const [timeLeft, setTimeLeft] = useState('');
@@ -180,6 +184,19 @@ const animateFly = (start, end, image) => {
                 />
               ))}
             </div>
+          ) : todaysProducts.length === 0 ? (
+            <div className="rounded-[2rem] border border-dashed border-emerald-200 bg-emerald-50/70 px-6 py-12 text-center">
+              <p className="text-sm font-black tracking-widest text-emerald-600">
+  ওহো!
+</p>
+              <h3 className="mt-3 text-2xl font-black text-slate-900">
+  আজ <span className="text-emerald-600">{activeCategoryName}</span> পাওয়া যাচ্ছে না
+</h3>
+
+<p className="mx-auto mt-3 max-w-md text-sm font-semibold leading-7 text-slate-500">
+  খুব শিগগিরই {activeCategoryName} বিভাগে নতুন আইটেম যোগ করা হবে। পরে আবার দেখে নিন।
+</p>
+            </div>
           ) : (
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {todaysProducts.map((product) => (
@@ -195,6 +212,7 @@ const animateFly = (start, end, image) => {
 
         <MixPackBuilder
           products={allTodaysProducts}
+          settings={settings}
           onFly={handleFly}
         />
 

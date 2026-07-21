@@ -23,7 +23,7 @@ function CheckoutForm({
           </p>
         </div>
         {form.name && (
-  <p className="text-xs text-green-600 font-bold mt-2">
+  <p className="text-xs text-emerald-600 font-bold mt-2">
     ✔ আপনার তথ্য সংরক্ষিত আছে
   </p>
 )}

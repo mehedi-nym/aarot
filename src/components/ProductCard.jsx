@@ -10,11 +10,35 @@ function ProductCard({ product, onFly }) {
   const meta = getSellTypeMeta(product.sell_type);
   const [quantity, setQuantity] = useState(Number(product.minimum_quantity || meta.min));
 
-  const isAvailable = product.is_available;
-  const stockText = isAvailable ? "অর্ডার নেওয়া হচ্ছে" : "আজকের মতো শেষ";
+  const stockQuantity = Number(product.stock_quantity || 0);
+  const isOutOfStock = stockQuantity <= 0;
+  const isUnavailableToday = product.available_today === false;
+  const isInactive = product.is_available === false;
+  const canOrder = !isInactive && !isUnavailableToday && !isOutOfStock;
+  const stockText = isOutOfStock
+    ? 'স্টক শেষ'
+    : isUnavailableToday
+      ? 'আজ অর্ডার বন্ধ'
+      : isInactive
+        ? 'সাময়িক বন্ধ'
+        : 'অর্ডার নেওয়া হচ্ছে';
+  const buttonText = isOutOfStock
+    ? 'স্টক শেষ'
+    : isUnavailableToday
+      ? 'আজকের জন্য বন্ধ'
+      : isInactive
+        ? 'সাময়িকভাবে বন্ধ'
+        : 'ব্যাগে রাখুন';
+  const helperText = isOutOfStock
+    ? 'এই পণ্যটি আপাতত স্টকে নেই।'
+    : isUnavailableToday
+      ? 'আজ এই পণ্যটি অর্ডার নেওয়া হচ্ছে না।'
+      : isInactive
+        ? 'পণ্যটি সাময়িকভাবে বন্ধ আছে।'
+        : '';
 
   const handleAddToBag = (e) => {
-  if (!isAvailable) return;
+  if (!canOrder) return;
 
   const rect = e.currentTarget.getBoundingClientRect();
 
@@ -38,7 +62,7 @@ function ProductCard({ product, onFly }) {
           src={product.image_url}
           alt={product.name_bn}
           className={`h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-110 will-change-transform ${
-            !isAvailable ? 'opacity-40 grayscale' : ''
+            !canOrder ? 'opacity-40 grayscale' : ''
           }`}
         />
         
@@ -52,7 +76,7 @@ function ProductCard({ product, onFly }) {
         {/* Stock Status */}
         <div className="absolute bottom-4 left-4 z-10">
           <span className={`px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-tight shadow-sm transition-colors duration-300 ${
-            isAvailable ? 'bg-emerald-500 text-white' : 'bg-gray-400 text-white'
+            canOrder ? 'bg-emerald-500 text-white' : 'bg-amber-500 text-white'
           }`}>
             {stockText}
           </span>
@@ -80,7 +104,15 @@ function ProductCard({ product, onFly }) {
 
         {/* 3. Interaction Section */}
         <div className="mt-auto space-y-3">
-          <div className="bg-slate-50 rounded-2xl p-1 transition-colors group-hover:bg-emerald-50/50">
+          {helperText && (
+            <p className="rounded-2xl bg-amber-50 px-3 py-2 text-xs font-bold leading-5 text-amber-700">
+              {helperText}
+            </p>
+          )}
+
+          <div className={`rounded-2xl p-1 transition-colors ${
+            canOrder ? 'bg-slate-50 group-hover:bg-emerald-50/50' : 'bg-slate-100 opacity-60'
+          }`}>
              <QuantityControl
                 sellType={product.sell_type}
                 value={quantity}
@@ -92,16 +124,16 @@ function ProductCard({ product, onFly }) {
           
           <button
             type="button"
-            disabled={!isAvailable}
+            disabled={!canOrder}
             onClick={handleAddToBag}
             className={`w-full py-4 rounded-2xl font-black text-sm flex items-center justify-center gap-3 transition-all duration-300 active:scale-95 z-20 relative ${
-              isAvailable 
+              canOrder 
                 ? 'bg-slate-900 text-white hover:bg-emerald-600 shadow-lg shadow-slate-200 hover:shadow-emerald-200' 
                 : 'bg-slate-100 text-slate-400 cursor-not-allowed'
             }`}
           >
             <span className="text-xl transform group-hover:rotate-12 transition-transform">🛍️</span>
-            ব্যাগে রাখুন
+            {buttonText}
           </button>
         </div>
       </div>

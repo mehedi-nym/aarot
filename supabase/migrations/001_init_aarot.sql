@@ -45,6 +45,7 @@ create table if not exists public.site_settings (
   base_delivery_charge numeric(10,2) not null default 40,
   per_km_delivery_charge numeric(10,2) not null default 10,
   bkash_number text not null,
+  mix_pack_enabled boolean not null default true,
   delivery_start_time_time time not null default '14:00:00',
   created_at timestamptz not null default timezone('utc', now()),
   updated_at timestamptz not null default timezone('utc', now())
@@ -359,6 +360,7 @@ insert into public.site_settings (
   base_delivery_charge,
   per_km_delivery_charge,
   bkash_number,
+  mix_pack_enabled,
   delivery_start_time_time
 )
 values (
@@ -368,6 +370,7 @@ values (
   40,
   10,
   '01711-223344',
+  true,
   '14:00:00'
 )
 on conflict (id) do update
@@ -377,6 +380,7 @@ set
   base_delivery_charge = excluded.base_delivery_charge,
   per_km_delivery_charge = excluded.per_km_delivery_charge,
   bkash_number = excluded.bkash_number,
+  mix_pack_enabled = excluded.mix_pack_enabled,
   delivery_start_time_time = excluded.delivery_start_time_time;
 
 insert into public.products (

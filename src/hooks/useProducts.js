@@ -66,12 +66,12 @@ export function useProducts(activeCategory = 'all') {
   }, [activeCategory, products]);
 
   const todaysProducts = useMemo(
-    () => filteredProducts.filter((product) => product.available_today && product.is_available),
+    () => filteredProducts,
     [filteredProducts],
   );
 
   const allTodaysProducts = useMemo(
-    () => products.filter((product) => product.available_today && product.is_available),
+    () => products,
     [products],
   );
 

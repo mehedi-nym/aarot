@@ -7,6 +7,7 @@ export const sampleSettings = {
   base_delivery_charge: 40,
   per_km_delivery_charge: 10,
   bkash_number: '01711-223344',
+  mix_pack_enabled: true,
   delivery_start_time_time: '14:00:00',
 };
 

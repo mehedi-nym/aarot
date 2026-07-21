@@ -46,13 +46,13 @@ function TrackOrderPage() {
 
         {/* Minimal Search Input */}
         <form onSubmit={handleTrack} className="mb-12">
-          <div className="group relative bg-white p-2 rounded-[2rem] shadow-xl shadow-slate-200/50 flex items-center border border-transparent focus-within:border-indigo-500 transition-all">
+          <div className="group relative bg-white p-2 rounded-[2rem] shadow-xl shadow-slate-200/50 flex items-center border border-transparent focus-within:border-emerald-500 transition-all">
             <input 
               type="tel" required placeholder="ফোন নম্বর (01XXXXXXXXX)"
               className="flex-grow bg-transparent h-14 pl-6 text-lg font-bold text-slate-800 outline-none"
               value={phone} onChange={(e) => setPhone(e.target.value)}
             />
-            <button className="bg-slate-900 text-white h-14 px-8 rounded-[1.7rem] font-black text-sm hover:bg-indigo-600 transition-colors active:scale-95">
+            <button className="bg-slate-900 text-white h-14 px-8 rounded-[1.7rem] font-black text-sm hover:bg-emerald-600 transition-colors active:scale-95">
               {submitting ? '...' : 'অর্ডার দেখুন'}
             </button>
           </div>
@@ -71,7 +71,7 @@ function TrackOrderPage() {
             <div key={order.id} className="bg-white p-6 md:p-8 rounded-[2.5rem] border border-slate-100 shadow-sm overflow-hidden transition-transform active:scale-[0.99]">
               <div className="flex justify-between items-start mb-6">
                 <div>
-                  <span className="text-[10px] font-black text-indigo-500 uppercase tracking-widest block mb-1">Order Code</span>
+                  <span className="text-[10px] font-black text-emerald-600 uppercase tracking-widest block mb-1">Order Code</span>
                   <h4 className="text-xl font-black text-slate-900 leading-none tracking-tight">#{order.order_code}</h4>
                 </div>
                 <OrderStatusBadge status={order.status} />
@@ -93,14 +93,14 @@ function TrackOrderPage() {
                 {/* THIS IS THE LINK */}
       <Link 
         to={`/track/${order.order_code}`} 
-        className="text-xs font-black text-indigo-600 hover:underline uppercase tracking-widest"
+        className="text-xs font-black text-emerald-600 hover:underline uppercase tracking-widest"
       >
         বিস্তারিত দেখুন →
       </Link>
 
                 <div className="text-right">
                   <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">মোট পরিশোধযোগ্য</p>
-                  <p className="text-2xl font-black text-indigo-600 tracking-tighter leading-none">
+                  <p className="text-2xl font-black text-emerald-600 tracking-tighter leading-none">
                     {formatBanglaCurrency(order.total_amount)}
                   </p>
                 </div>
