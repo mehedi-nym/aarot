@@ -29,6 +29,7 @@ export const sampleProducts = [
     minimum_quantity: 0.5,
     is_available: true,
     available_today: true,
+    include_in_mix_pack: true,
   },
   {
     id: 'prod-2',
@@ -45,6 +46,7 @@ export const sampleProducts = [
     minimum_quantity: 1,
     is_available: true,
     available_today: true,
+    include_in_mix_pack: true,
   },
   {
     id: 'prod-3',
@@ -61,6 +63,7 @@ export const sampleProducts = [
     minimum_quantity: 250,
     is_available: true,
     available_today: true,
+    include_in_mix_pack: true,
   },
   {
     id: 'prod-4',
@@ -77,6 +80,7 @@ export const sampleProducts = [
     minimum_quantity: 2,
     is_available: true,
     available_today: true,
+    include_in_mix_pack: false,
   },
 ];
 

@@ -34,6 +34,7 @@ create table if not exists public.products (
   minimum_quantity numeric(10,2) not null default 1,
   is_available boolean not null default true,
   available_today boolean not null default true,
+  include_in_mix_pack boolean not null default false,
   created_at timestamptz not null default timezone('utc', now()),
   updated_at timestamptz not null default timezone('utc', now())
 );
@@ -396,7 +397,8 @@ insert into public.products (
   quantity_step,
   minimum_quantity,
   is_available,
-  available_today
+  available_today,
+  include_in_mix_pack
 )
 values
   (
@@ -411,6 +413,7 @@ values
     42,
     0.5,
     0.5,
+    true,
     true,
     true
   ),
@@ -427,6 +430,7 @@ values
     1,
     1,
     true,
+    true,
     true
   ),
   (
@@ -441,6 +445,7 @@ values
     8000,
     250,
     250,
+    true,
     true,
     true
   ),
@@ -457,7 +462,8 @@ values
     1,
     2,
     true,
-    true
+    true,
+    false
   )
 on conflict (id) do update
 set
@@ -472,4 +478,5 @@ set
   quantity_step = excluded.quantity_step,
   minimum_quantity = excluded.minimum_quantity,
   is_available = excluded.is_available,
-  available_today = excluded.available_today;
+  available_today = excluded.available_today,
+  include_in_mix_pack = excluded.include_in_mix_pack;

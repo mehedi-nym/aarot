@@ -76,6 +76,7 @@ function MixPackBuilder({ products = [], settings, onFly }) {
         (product) =>
           product.is_available &&
           product.available_today &&
+          product.include_in_mix_pack === true &&
           (product.category_id === 'cat-veg' || product.categories?.slug === 'sobji')
       ),
     [products]
@@ -205,8 +206,21 @@ function MixPackBuilder({ products = [], settings, onFly }) {
           </div>
         </div>
 
-        <div className="space-y-5 p-5 md:p-6">
-          <div className="grid gap-3 sm:grid-cols-2">
+        <div className="flex max-h-[760px] flex-col p-5 md:p-6">
+          <div className="mb-4 flex items-center justify-between gap-3">
+            <div>
+              <p className="text-sm font-black text-slate-900">সবজি বাছাই করুন</p>
+              <p className="text-xs font-bold text-slate-500">
+                {formatBanglaNumber(vegetableProducts.length)}টি পণ্য থেকে পছন্দ করুন
+              </p>
+            </div>
+            <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-black text-emerald-700">
+              {formatBanglaNumber(selectedLines.length)}টি নির্বাচিত
+            </span>
+          </div>
+
+          <div className="min-h-0 flex-1 overflow-y-auto pr-1 custom-scrollbar">
+            <div className="grid gap-3 sm:grid-cols-2">
             {vegetableProducts.map((product) => {
               const quantity = Number(selected[product.id] || 0);
               const unitMeta = getMixUnitMeta(product);
@@ -290,9 +304,10 @@ function MixPackBuilder({ products = [], settings, onFly }) {
                 </div>
               );
             })}
+            </div>
           </div>
 
-          <div className="space-y-3">
+          <div className="mt-5 space-y-3 border-t border-slate-100 pt-4">
             <p className="text-sm font-black text-slate-900">কাট সাইজ</p>
             <div className="grid gap-2 sm:grid-cols-3">
               {CUT_OPTIONS.map((option) => (
@@ -314,7 +329,7 @@ function MixPackBuilder({ products = [], settings, onFly }) {
               ))}
             </div>
           </div>
-
+              <br />
           <div className="rounded-2xl bg-slate-900 p-4 text-white">
             <div className="flex items-center justify-between gap-4">
               <div>
