@@ -1,8 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import {
   fetchOrders,
+  findTrackedOrders,
   placeOrder,
-  trackOrder,
   updateOrderStatus,
 } from '../lib/queries';
 import { hasSupabaseEnv, supabase } from '../lib/supabase';
@@ -65,32 +65,12 @@ export function useOrders({ adminMode = false } = {}) {
     }
   };
 
-  const findOrder = async ({ orderCode, phone }) => {
+  const findOrder = useCallback(async ({ orderCode, phone }) => {
   try {
     setSubmitting(true);
     setError('');
 
-    let query = supabase.from('orders').select(`
-      *,
-      items:order_items(*)
-    `);
-
-    // If we have an orderCode, that's unique enough!
-    if (orderCode) {
-      query = query.eq('order_code', orderCode);
-    } 
-    
-    // If we only have a phone (like on the list page)
-    if (phone && !orderCode) {
-      query = query.eq('phone', phone);
-    }
-
-    const { data, error: fetchError } = await query;
-
-    if (fetchError) throw fetchError;
-    
-    // Return the first item if searching by Code, otherwise the whole array
-    return orderCode ? (data[0] || null) : data;
+    return await findTrackedOrders({ orderCode, phone });
 
   } catch (trackError) {
     setError(trackError.message || 'অর্ডার খুঁজে পাওয়া যায়নি');
@@ -98,7 +78,7 @@ export function useOrders({ adminMode = false } = {}) {
   } finally {
     setSubmitting(false);
   }
-};
+}, []);
   const changeStatus = async (payload) => {
     try {
       setSubmitting(true);

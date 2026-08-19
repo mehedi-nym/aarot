@@ -176,6 +176,7 @@ function CheckoutPage() {
         product_name_bn: item.mix_details_bn
           ? `${item.name_bn} - ${item.mix_details_bn}`
           : item.name_bn,
+        product_image_url: item.image_url || '',
         sell_type: item.sell_type,
         unit_price: item.price,
         quantity: item.quantity,
@@ -201,14 +202,19 @@ setForm((prev) => ({
   // --- Empty Cart ---
   if (!items.length && !successOrder) {
     return (
-      <div className="mx-auto max-w-4xl px-4 py-20 text-center">
+      <div className="mx-auto max-w-4xl px-4 py-16 text-center sm:py-20">
+        <div className="section-shell px-5 py-12 sm:px-8">
         <h2 className="text-3xl font-black text-slate-900">ব্যাগটি খালি!</h2>
+        <p className="mx-auto mt-3 max-w-md text-sm font-bold leading-7 text-brand-700">
+          পছন্দের তাজা পণ্য ব্যাগে যোগ করে আবার চেকআউট করুন।
+        </p>
         <Link
           to="/"
-          className="mt-6 inline-block bg-slate-900 text-white px-8 py-4 rounded-2xl font-bold"
+          className="mt-6 inline-flex rounded-2xl bg-brand-600 px-8 py-4 font-bold text-white transition hover:bg-brand-700"
         >
           বাজারে ফিরুন
         </Link>
+        </div>
       </div>
     );
   }
@@ -216,8 +222,8 @@ setForm((prev) => ({
   // --- Success ---
   if (successOrder) {
     return (
-      <div className="mx-auto max-w-3xl px-4 py-16 text-center">
-        <div className="bg-white p-10 rounded-[3rem] border border-slate-100 shadow-xl">
+      <div className="mx-auto max-w-3xl px-4 py-12 text-center sm:py-16">
+        <div className="section-shell p-6 shadow-soft sm:p-10">
           <div className="text-5xl mb-6">🎉</div>
           <h2 className="text-3xl font-black text-slate-900">
             অর্ডার সফল হয়েছে!
@@ -228,16 +234,16 @@ setForm((prev) => ({
               #{successOrder.order_code}
             </span>
           </p>
-          <div className="mt-8 flex gap-4 justify-center">
+          <div className="mt-8 grid gap-3 sm:flex sm:justify-center">
             <Link
               to="/track"
-              className="bg-slate-900 text-white px-8 py-4 rounded-2xl font-bold"
+              className="rounded-2xl bg-brand-600 px-8 py-4 font-bold text-white transition hover:bg-brand-700"
             >
               ট্র্যাক করুন
             </Link>
             <Link
               to="/"
-              className="bg-slate-100 text-slate-900 px-8 py-4 rounded-2xl font-bold"
+              className="rounded-2xl border border-brand-100 bg-white px-8 py-4 font-bold text-brand-800 transition hover:bg-brand-50"
             >
               আবার বাজার করুন
             </Link>
@@ -249,8 +255,25 @@ setForm((prev) => ({
 
   // --- Main UI ---
   return (
-    <div className="mx-auto max-w-7xl px-4 py-8 bg-slate-50 min-h-screen">
-      <div className="grid gap-8 lg:grid-cols-[1.1fr,0.9fr]">
+    <div className="mx-auto w-full max-w-7xl px-3 py-5 sm:px-6 sm:py-8 lg:px-8">
+      <div className="mb-5 flex flex-col gap-3 sm:mb-8 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <p className="text-xs font-black uppercase tracking-widest text-brand-600">
+            Checkout
+          </p>
+          <h1 className="mt-1 text-2xl font-black tracking-tight text-ink sm:text-3xl">
+            অর্ডার কনফার্ম করুন
+          </h1>
+        </div>
+        <Link
+          to="/"
+          className="inline-flex w-fit rounded-full border border-brand-100 bg-white/80 px-4 py-2 text-xs font-black text-brand-700 transition hover:bg-white"
+        >
+          বাজারে ফিরুন
+        </Link>
+      </div>
+
+      <div className="grid gap-5 lg:grid-cols-[minmax(0,1.05fr),minmax(340px,0.95fr)] lg:items-start lg:gap-8">
 
         {/* Left */}
         <CheckoutForm
@@ -264,26 +287,27 @@ setForm((prev) => ({
         />
 
         {/* Right */}
-        <div className="space-y-6">
+        <div className="space-y-5 lg:space-y-6">
 
           {/* Coupon */}
-          <div className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm">
+          <div className="section-shell p-4 sm:p-6">
             <h4 className="font-black text-slate-900 mb-4">
               ডিসকাউন্ট কুপন
             </h4>
 
-            <div className="flex gap-2">
+            <div className="grid gap-2 sm:grid-cols-[1fr,auto]">
               <input
                 type="text"
                 value={couponCode}
                 onChange={(e) => setCouponCode(e.target.value)}
                 placeholder="কুপন কোড লিখুন"
-                className="flex-grow bg-slate-50 rounded-xl px-5 font-bold uppercase"
+                className="field-base h-12 font-bold uppercase"
               />
 
               <button
+                type="button"
                 onClick={handleApplyCoupon}
-                className="bg-emerald-600 text-white px-6 py-3 rounded-xl font-black"
+                className="h-12 rounded-xl bg-brand-600 px-6 text-sm font-black text-white transition hover:bg-brand-700"
               >
                 Apply
               </button>
@@ -308,6 +332,7 @@ setForm((prev) => ({
             deliveryCharge={deliveryCharge}
             discount={safeDiscount}
             totalAmount={totalAmount}
+            settings={settings}
           />
         </div>
       </div>

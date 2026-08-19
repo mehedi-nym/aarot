@@ -22,7 +22,7 @@ function OrderSummaryCard({
   const progress = Math.min((subtotal / freeDeliveryThreshold) * 100, 100);
 
   return (
-    <aside className="bg-white rounded-[2rem] border border-slate-100 shadow-sm p-5 md:p-6 sticky top-8">
+    <aside className="section-shell p-4 sm:p-5 md:p-6 lg:sticky lg:top-24">
       <div className="space-y-5">
 
         {/* Header */}
@@ -36,13 +36,13 @@ function OrderSummaryCard({
         </div>
 
         {/* Item List */}
-        <div className="space-y-3 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
+        <div className="max-h-[360px] space-y-3 overflow-y-auto pr-1 custom-scrollbar sm:max-h-[400px] sm:pr-2">
           {items.map((item) => (
             <div
               key={item.id}
-              className="flex items-center gap-4 rounded-2xl border border-slate-50 bg-slate-50/50 px-3 py-3"
+              className="grid grid-cols-[auto,minmax(0,1fr)] gap-3 rounded-2xl border border-brand-50 bg-white/70 px-3 py-3 sm:flex sm:items-center sm:gap-4"
             >
-              <div className="h-16 w-16 flex-shrink-0 overflow-hidden rounded-xl border border-white shadow-sm bg-white">
+              <div className="h-14 w-14 flex-shrink-0 overflow-hidden rounded-xl border border-white bg-white shadow-sm sm:h-16 sm:w-16">
                 <img
                   src={item.image_url || '/placeholder-product.png'}
                   alt={item.name_bn}
@@ -54,8 +54,8 @@ function OrderSummaryCard({
                 />
               </div>
 
-              <div className="flex-grow">
-                <p className="font-bold text-slate-800 text-sm leading-tight">
+              <div className="min-w-0 sm:flex-grow">
+                <p className="break-words text-sm font-bold leading-tight text-slate-800">
                   {item.name_bn}
                 </p>
                 {item.mix_details_bn && (
@@ -63,14 +63,14 @@ function OrderSummaryCard({
                     {item.mix_details_bn}
                   </p>
                 )}
-                <p className="text-xs text-slate-500 font-bold mt-1">
+                <p className="mt-1 text-xs font-bold text-slate-500">
                   {item.quantity}{' '}
                   {getSellTypeMeta(item.sell_type).shortLabel} x{' '}
                   {formatBanglaCurrency(item.price)}
                 </p>
               </div>
 
-              <div className="text-right">
+              <div className="col-span-2 border-t border-brand-50 pt-2 text-right sm:col-span-1 sm:border-0 sm:pt-0">
                 <p className="font-black text-slate-900 text-sm">
                   {formatBanglaCurrency(
                     Number(item.price) * Number(item.quantity)
@@ -82,7 +82,7 @@ function OrderSummaryCard({
         </div>
 
         {/* 🔥 FREE DELIVERY PROGRESS (NEW FEATURE) */}
-        <div className="rounded-[2rem] border border-slate-100 bg-slate-50/50 p-5 space-y-3">
+        <div className="space-y-3 rounded-[1.5rem] border border-brand-100 bg-brand-50/70 p-4 sm:rounded-[2rem] sm:p-5">
           
           <div className="flex items-center justify-between">
             <p className="text-sm font-black text-slate-900">
@@ -127,7 +127,7 @@ function OrderSummaryCard({
         </div>
 
         {/* Calculation Box */}
-        <div className="space-y-3 rounded-[2rem] bg-slate-900 p-6 text-slate-300">
+        <div className="space-y-3 rounded-[1.5rem] bg-ink p-5 text-slate-300 sm:rounded-[2rem] sm:p-6">
           
           <div className="flex items-center justify-between text-sm font-medium">
             <span>পণ্যের মূল্য</span>
@@ -152,16 +152,16 @@ function OrderSummaryCard({
             </div>
           )}
 
-          <div className="flex items-center justify-between border-t border-slate-700 pt-4 mt-2 text-xl font-black text-white">
+          <div className="mt-2 flex items-center justify-between gap-4 border-t border-white/10 pt-4 text-lg font-black text-white sm:text-xl">
             <span>সর্বমোট</span>
-            <span className="text-emerald-400">
+            <span className="text-brand-300">
               {formatBanglaCurrency(totalAmount)}
             </span>
           </div>
         </div>
 
         {/* Gift Section (UNCHANGED) */}
-        <div className="bg-gradient-to-br from-emerald-50 to-white border border-emerald-100 p-6 rounded-[2rem] flex items-center justify-between shadow-sm">
+        <div className="flex flex-col gap-4 rounded-[1.5rem] border border-brand-100 bg-brand-50/70 p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between sm:rounded-[2rem] sm:p-6">
           <div className="flex items-center gap-4">
             <div className="h-12 w-12 bg-white rounded-2xl flex items-center justify-center text-2xl shadow-sm border border-emerald-50">
               🛍️
@@ -176,7 +176,7 @@ function OrderSummaryCard({
             </div>
           </div>
 
-          <div className="text-right">
+          <div className="text-left sm:text-right">
             <span className="text-xs text-slate-400 line-through block font-bold">
               ৳১০
             </span>

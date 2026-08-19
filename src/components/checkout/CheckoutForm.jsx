@@ -10,8 +10,8 @@ function CheckoutForm({
   error,
 }) {
   return (
-    <form className="section-shell p-5 md:p-6" onSubmit={onSubmit}>
-      <div className="space-y-6">
+    <form className="section-shell p-4 sm:p-5 md:p-6" onSubmit={onSubmit}>
+      <div className="space-y-5 sm:space-y-6">
 
         {/* Header */}
         <div>
@@ -29,7 +29,7 @@ function CheckoutForm({
 )}
 
         {/* Name + Phone */}
-        <div className="grid gap-4 md:grid-cols-2">
+        <div className="grid gap-4 sm:grid-cols-2">
           <label className="space-y-2">
             <span className="text-sm font-semibold text-brand-700">নাম</span>
             <input
@@ -96,16 +96,16 @@ function CheckoutForm({
             পেমেন্ট মেথড
           </span>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid gap-3 sm:grid-cols-2">
             {[
-              { id: 'cod', label: 'Cash on Delivery' },
-              { id: 'bkash', label: 'bKash' },
+              { id: 'cod', label: 'ক্যাশ অন ডেলিভারি' },
+              { id: 'bkash', label: 'বিকাশ' },
             ].map((m) => (
               <button
                 key={m.id}
                 type="button"
                 onClick={() => onChange('paymentMethod', m.id)}
-                className={`py-3 rounded-xl border text-sm font-semibold transition ${
+                className={`min-h-12 rounded-xl border px-4 py-3 text-sm font-semibold transition ${
                   form.paymentMethod === m.id
                     ? 'bg-ink text-white border-ink'
                     : 'bg-white border-slate-200 text-brand-700 hover:border-slate-300'
@@ -119,11 +119,11 @@ function CheckoutForm({
 
         {/* bKash Section */}
         {form.paymentMethod === 'bkash' && (
-          <div className="rounded-[1.5rem] border border-slate-100 bg-slate-50/60 p-5 space-y-4">
+          <div className="rounded-[1.5rem] border border-brand-100 bg-brand-50/70 p-4 space-y-4 sm:p-5">
             
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between gap-4">
               <p className="text-sm font-semibold text-brand-700">
-                bKash Number
+                বিকাশ নাম্বার
               </p>
 
               <button
@@ -137,7 +137,7 @@ function CheckoutForm({
               </button>
             </div>
 
-            <p className="text-lg font-extrabold text-ink tracking-wider">
+            <p className="break-words text-lg font-extrabold text-ink tracking-wider">
               {settings?.bkash_number || '017XXXXXXXX'}
             </p>
 
@@ -175,7 +175,7 @@ function CheckoutForm({
         <button
           type="submit"
           disabled={submitting || !isEligible}
-          className="btn-primary color-emerald-600 w-full py-4 rounded-2xl text-base font-bold"
+          className="btn-primary w-full rounded-2xl py-4 text-base font-bold"
         >
           {submitting ? 'অর্ডার প্রসেস হচ্ছে...' : 'অর্ডার কনফার্ম করুন'}
         </button>

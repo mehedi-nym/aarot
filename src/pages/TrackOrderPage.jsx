@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import OrderStatusBadge from '../components/OrderStatusBadge';
 import { useOrders } from '../hooks/useOrders';
 import { Link } from 'react-router-dom';
@@ -10,29 +10,66 @@ import {
 
 function TrackOrderPage() {
   const { findOrder, submitting, error } = useOrders();
+  const [cachedTrackPhone] = useState(() => {
+    if (typeof window === 'undefined') return '';
+    return localStorage.getItem('track_phone') || '';
+  });
   const [phone, setPhone] = useState(() => {
-  return localStorage.getItem('track_phone') || '';
-});
+    return cachedTrackPhone;
+  });
   const [orders, setOrders] = useState([]);
   const [hasSearched, setHasSearched] = useState(false);
 
-  const handleTrack = async (e) => {
-  e.preventDefault();
+  const loadOrdersByPhone = useCallback(
+    async (phoneNumber, shouldCache = false) => {
+      const cleanPhone = phoneNumber.trim();
 
-  localStorage.setItem('track_phone', phone);
+      if (!cleanPhone) {
+        setOrders([]);
+        setHasSearched(false);
+        return;
+      }
 
-  const data = await findOrder({ phone });
+      if (shouldCache && typeof window !== 'undefined') {
+        localStorage.setItem('track_phone', cleanPhone);
+      }
 
-  let results = Array.isArray(data) ? data : data ? [data] : [];
+      const data = await findOrder({ phone: cleanPhone });
+      const results = Array.isArray(data) ? data : data ? [data] : [];
 
-  // ✅ Sort latest first
-  results = results.sort(
-    (a, b) => new Date(b.created_at) - new Date(a.created_at)
+      setOrders(results);
+      setHasSearched(true);
+    },
+    [findOrder],
   );
 
-  setOrders(results);
-  setHasSearched(true);
-};
+  useEffect(() => {
+    const cachedPhone = cachedTrackPhone.trim();
+    if (!cachedPhone) return undefined;
+
+    loadOrdersByPhone(cachedPhone);
+
+    const refreshCachedOrders = () => {
+      if (document.visibilityState === 'visible') {
+        loadOrdersByPhone(cachedPhone);
+      }
+    };
+
+    window.addEventListener('focus', refreshCachedOrders);
+    window.addEventListener('pageshow', refreshCachedOrders);
+    document.addEventListener('visibilitychange', refreshCachedOrders);
+
+    return () => {
+      window.removeEventListener('focus', refreshCachedOrders);
+      window.removeEventListener('pageshow', refreshCachedOrders);
+      document.removeEventListener('visibilitychange', refreshCachedOrders);
+    };
+  }, [cachedTrackPhone, loadOrdersByPhone]);
+
+  const handleTrack = async (e) => {
+    e.preventDefault();
+    await loadOrdersByPhone(phone, true);
+  };
 
   return (
     <div className="min-h-screen bg-[#F9FAFB] px-4 py-12 md:py-20">
@@ -41,7 +78,9 @@ function TrackOrderPage() {
         {/* Search Header */}
         <div className="mb-12">
           <h2 className="text-4xl font-black text-slate-900 tracking-tighter mb-2">আমার অর্ডার</h2>
-          <p className="text-slate-500 font-medium">আপনার ফোন নম্বর দিয়ে সব অর্ডারের আপডেট জানুন</p>
+          <p className="text-slate-500 font-medium">
+            একবার নম্বর দিলে পরে এই পেজে এলেই নতুন অর্ডার আপডেট দেখাবে
+          </p>
         </div>
 
         {/* Minimal Search Input */}
@@ -53,7 +92,7 @@ function TrackOrderPage() {
               value={phone} onChange={(e) => setPhone(e.target.value)}
             />
             <button className="bg-slate-900 text-white h-14 px-8 rounded-[1.7rem] font-black text-sm hover:bg-emerald-600 transition-colors active:scale-95">
-              {submitting ? '...' : 'অর্ডার দেখুন'}
+              {submitting ? 'লোড হচ্ছে...' : 'অর্ডার দেখুন'}
             </button>
           </div>
           {error && <p className="mt-4 ml-4 text-xs font-bold text-red-500 uppercase tracking-widest">⚠️ {error}</p>}

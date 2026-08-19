@@ -132,7 +132,21 @@ function ProductCard({ product, onFly }) {
                 : 'bg-slate-100 text-slate-400 cursor-not-allowed'
             }`}
           >
-            <span className="text-xl transform group-hover:rotate-12 transition-transform">🛍️</span>
+             <span className="relative inline-block w-5 h-5">
+    {/* Normal icon */}
+    <img
+      src="https://bmqsgrrrravkziwbmyll.supabase.co/storage/v1/object/public/asset/shopping-bag%20(4).png"
+      alt="Shopping bag"
+      className="absolute inset-0 w-full h-full object-contain opacity-100 group-hover:opacity-0 transition-opacity duration-200"
+    />
+
+    {/* Hover icon */}
+    <img
+      src="https://bmqsgrrrravkziwbmyll.supabase.co/storage/v1/object/public/asset/shopping-bag%20(2).png"
+      alt=""
+      className="absolute inset-0 w-full h-full object-contain opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+    />
+  </span>
             {buttonText}
           </button>
         </div>

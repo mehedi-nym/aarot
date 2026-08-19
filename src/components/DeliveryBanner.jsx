@@ -16,13 +16,13 @@ function DeliveryBanner({ settings }) {
             <span className="relative inline-flex h-2 w-2 rounded-full bg-[#F3C84B]" />
           </span>
 
-          <span className="text-[9px] font-extrabold tracking-[0.16em] text-white">
+          <span className="text-[12px] font-extrabold tracking-[0.16em] text-white">
             LIVE
           </span>
         </div>
 
         <div className="relative min-w-0 flex-1 overflow-hidden">
-          <div className="whitespace-nowrap text-[10px] font-semibold text-[#E8F1E5] animate-[aarot-marquee_32s_linear_infinite]">
+          <div className="whitespace-nowrap text-[14px] font-semibold text-[#E8F1E5] animate-[aarot-marquee_32s_linear_infinite]">
             আজকের আড়ৎ খোলা
             <span className="mx-3 text-[#F3C84B]">•</span>
             প্রতিদিনের টাটকা বাজার এখন ঘরে বসেই অর্ডার করুন

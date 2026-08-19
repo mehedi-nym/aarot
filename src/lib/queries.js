@@ -107,6 +107,61 @@ export async function trackOrder(orderCode, phone) {
   return data?.[0] || null;
 }
 
+const normalizeTrackedOrder = (order) => {
+  if (!order) return order;
+
+  const sourceItems = order.items || order.order_items || [];
+  const items = sourceItems.map((item) => ({
+    ...item,
+    image_url: item.image_url || item.product_image_url || item.products?.image_url || '',
+  }));
+
+  return {
+    ...order,
+    items,
+    order_items: items,
+  };
+};
+
+export async function findTrackedOrders({ orderCode, phone } = {}) {
+  const cleanOrderCode = orderCode?.trim().toUpperCase();
+  const cleanPhone = phone?.trim();
+
+  if (!cleanOrderCode && !cleanPhone) return [];
+
+  if (!hasSupabaseEnv) {
+    const orders = readLocalOrders();
+    const results = orders
+      .filter((order) => {
+        const orderCodeMatches = cleanOrderCode ? order.order_code === cleanOrderCode : true;
+        const phoneMatches = cleanPhone ? order.phone === cleanPhone : true;
+        return orderCodeMatches && phoneMatches;
+      })
+      .sort(sortByDateDesc)
+      .map(normalizeTrackedOrder);
+
+    return cleanOrderCode ? results[0] || null : results;
+  }
+
+  const rpcName = cleanOrderCode
+    ? cleanPhone
+      ? 'track_order'
+      : 'track_order_by_code'
+    : 'track_orders_by_phone';
+  const rpcArgs = cleanOrderCode
+    ? cleanPhone
+      ? { order_code_input: cleanOrderCode, phone_input: cleanPhone }
+      : { order_code_input: cleanOrderCode }
+    : { phone_input: cleanPhone };
+
+  const { data, error } = await supabase.rpc(rpcName, rpcArgs);
+
+  if (error) throw error;
+
+  const results = (data || []).map(normalizeTrackedOrder);
+  return cleanOrderCode ? results[0] || null : results;
+}
+
 export async function fetchOrders() {
   if (!hasSupabaseEnv) {
     return readLocalOrders().sort(sortByDateDesc);

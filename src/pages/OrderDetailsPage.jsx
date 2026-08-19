@@ -16,27 +16,36 @@ const STEPS = [
 
 function OrderDetailsPage() {
   const { orderCode } = useParams(); // Gets the ID from the URL
-  const { findOrder, loading } = useOrders();
+  const { findOrder, submitting } = useOrders();
   const [order, setOrder] = useState(null);
+  const [loaded, setLoaded] = useState(false);
   
   useEffect(() => {
+    let isCurrent = true;
+
     const getOrderDetails = async () => {
-      // Assuming you have a phone number saved in local storage or 
-      // you updated your hook to fetch by code only
+      setLoaded(false);
       const result = await findOrder({ orderCode });
+
+      if (!isCurrent) return;
       
-      // Since findOrder returns an array, we take the first item
       if (result && Array.isArray(result)) {
         setOrder(result[0]);
       } else {
         setOrder(result);
       }
+
+      setLoaded(true);
     };
     
     if (orderCode) getOrderDetails();
-  }, [orderCode]);
 
-  if (loading) return <p className="p-20 text-center font-bold text-slate-400">অর্ডার লোড হচ্ছে...</p>;
+    return () => {
+      isCurrent = false;
+    };
+  }, [findOrder, orderCode]);
+
+  if (!loaded || submitting) return <p className="p-20 text-center font-bold text-slate-400">অর্ডার লোড হচ্ছে...</p>;
   if (!order) return <p className="p-20 text-center font-bold text-slate-400">অর্ডারটি পাওয়া যায়নি</p>;
 
   const currentStepIndex = STEPS.findIndex(s => s.id === order.status);
@@ -109,7 +118,17 @@ function OrderDetailsPage() {
                 {(order.items || []).map((item, i) => (
                   <div key={i} className="flex justify-between items-center py-3 border-b border-slate-50 last:border-none">
                     <div className="flex gap-4 items-center">
-                      <div className="w-12 h-12 bg-slate-100 rounded-xl" />
+                      <div className="h-14 w-14 flex-shrink-0 overflow-hidden rounded-xl border border-slate-100 bg-slate-100">
+                        <img
+                          src={item.image_url || '/placeholder-product.png'}
+                          alt={item.product_name_bn}
+                          className="h-full w-full object-cover"
+                          onError={(event) => {
+                            event.currentTarget.src =
+                              'https://via.placeholder.com/150?text=No+Image';
+                          }}
+                        />
+                      </div>
                       <div>
                         <p className="text-sm font-bold text-slate-800">{item.product_name_bn}</p>
                         <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Qty: {formatBanglaNumber(item.quantity)}</p>

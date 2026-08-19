@@ -30,6 +30,21 @@ export const AREA_OPTIONS = [
     name: 'মোহাম্মদপুর',
     distanceKm: 5,
   },
+  {
+    slug: 'lalmatia',
+    name: 'লালমাটিয়া',
+    distanceKm: 4,
+  },
+  {
+    slug: 'adabor',
+    name: 'আদাবর',
+    distanceKm: 6,
+  },
+  {
+    slug: 'shyamoli',
+    name: 'শ্যামলী',
+    distanceKm: 6,
+  },
 ];
 
 export const ORDER_STATUSES = [

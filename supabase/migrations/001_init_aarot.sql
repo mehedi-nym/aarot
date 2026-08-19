@@ -80,6 +80,7 @@ create table if not exists public.order_items (
   order_id uuid not null references public.orders(id) on delete cascade,
   product_id uuid references public.products(id) on delete set null,
   product_name_bn text not null,
+  product_image_url text,
   sell_type text not null check (sell_type in ('piece', 'kg', 'gram')),
   unit_price numeric(10,2) not null default 0,
   quantity numeric(10,2) not null default 1,
@@ -259,6 +260,7 @@ begin
       order_id,
       product_id,
       product_name_bn,
+      product_image_url,
       sell_type,
       unit_price,
       quantity,
@@ -268,6 +270,7 @@ begin
       created_order.id,
       nullif(item->>'product_id', '')::uuid,
       item->>'product_name_bn',
+      nullif(item->>'product_image_url', ''),
       item->>'sell_type',
       coalesce((item->>'unit_price')::numeric, 0),
       coalesce((item->>'quantity')::numeric, 0),
@@ -325,6 +328,7 @@ as $$
         jsonb_build_object(
           'id', oi.id,
           'product_name_bn', oi.product_name_bn,
+          'image_url', coalesce(oi.product_image_url, p.image_url),
           'sell_type', oi.sell_type,
           'unit_price', oi.unit_price,
           'quantity', oi.quantity,
@@ -335,13 +339,141 @@ as $$
     ) as order_items
   from public.orders o
   left join public.order_items oi on oi.order_id = o.id
+  left join public.products p on p.id = oi.product_id
   where o.order_code = upper(order_code_input)
     and o.phone = phone_input
   group by o.id;
 $$;
 
+create or replace function public.track_orders_by_phone(phone_input text)
+returns table (
+  id uuid,
+  order_code text,
+  customer_name text,
+  phone text,
+  address_bn text,
+  area text,
+  area_name_bn text,
+  payment_method text,
+  subtotal numeric,
+  delivery_charge numeric,
+  total_amount numeric,
+  delivery_date timestamptz,
+  delivery_type text,
+  status text,
+  status_message_bn text,
+  created_at timestamptz,
+  order_items jsonb
+)
+language sql
+security definer
+set search_path = public
+as $$
+  select
+    o.id,
+    o.order_code,
+    o.customer_name,
+    o.phone,
+    o.address_bn,
+    o.area,
+    o.area_name_bn,
+    o.payment_method,
+    o.subtotal,
+    o.delivery_charge,
+    o.total_amount,
+    o.delivery_date,
+    o.delivery_type,
+    o.status,
+    o.status_message_bn,
+    o.created_at,
+    coalesce(
+      jsonb_agg(
+        jsonb_build_object(
+          'id', oi.id,
+          'product_name_bn', oi.product_name_bn,
+          'image_url', coalesce(oi.product_image_url, p.image_url),
+          'sell_type', oi.sell_type,
+          'unit_price', oi.unit_price,
+          'quantity', oi.quantity,
+          'line_total', oi.line_total
+        )
+      ) filter (where oi.id is not null),
+      '[]'::jsonb
+    ) as order_items
+  from public.orders o
+  left join public.order_items oi on oi.order_id = o.id
+  left join public.products p on p.id = oi.product_id
+  where o.phone = phone_input
+  group by o.id
+  order by o.created_at desc;
+$$;
+
+create or replace function public.track_order_by_code(order_code_input text)
+returns table (
+  id uuid,
+  order_code text,
+  customer_name text,
+  phone text,
+  address_bn text,
+  area text,
+  area_name_bn text,
+  payment_method text,
+  subtotal numeric,
+  delivery_charge numeric,
+  total_amount numeric,
+  delivery_date timestamptz,
+  delivery_type text,
+  status text,
+  status_message_bn text,
+  created_at timestamptz,
+  order_items jsonb
+)
+language sql
+security definer
+set search_path = public
+as $$
+  select
+    o.id,
+    o.order_code,
+    o.customer_name,
+    o.phone,
+    o.address_bn,
+    o.area,
+    o.area_name_bn,
+    o.payment_method,
+    o.subtotal,
+    o.delivery_charge,
+    o.total_amount,
+    o.delivery_date,
+    o.delivery_type,
+    o.status,
+    o.status_message_bn,
+    o.created_at,
+    coalesce(
+      jsonb_agg(
+        jsonb_build_object(
+          'id', oi.id,
+          'product_name_bn', oi.product_name_bn,
+          'image_url', coalesce(oi.product_image_url, p.image_url),
+          'sell_type', oi.sell_type,
+          'unit_price', oi.unit_price,
+          'quantity', oi.quantity,
+          'line_total', oi.line_total
+        )
+      ) filter (where oi.id is not null),
+      '[]'::jsonb
+    ) as order_items
+  from public.orders o
+  left join public.order_items oi on oi.order_id = o.id
+  left join public.products p on p.id = oi.product_id
+  where o.order_code = upper(order_code_input)
+  group by o.id;
+$$;
+
 grant execute on function public.place_order(jsonb) to anon, authenticated;
 grant execute on function public.track_order(text, text) to anon, authenticated;
+grant execute on function public.track_orders_by_phone(text) to anon, authenticated;
+grant execute on function public.track_order_by_code(text) to anon, authenticated;
 
 insert into public.categories (id, name_bn, slug, sort_order, is_active)
 values
