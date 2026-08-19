@@ -18,7 +18,9 @@ const tabs = [
 
 function AdminDashboardPage() {
   const { admin, logout } = useAdminAuth();
-  const { categories, products, settings, refetch } = useProducts();
+  const { categories, products, settings, refetch } = useProducts('all', {
+    includeUnavailable: true,
+  });
   const { orders, loading, submitting, changeStatus } = useOrders({
     adminMode: true,
   });

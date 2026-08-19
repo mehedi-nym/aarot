@@ -30,6 +30,7 @@ export const sampleProducts = [
     is_available: true,
     available_today: true,
     include_in_mix_pack: true,
+    priority: 1,
   },
   {
     id: 'prod-2',
@@ -47,6 +48,7 @@ export const sampleProducts = [
     is_available: true,
     available_today: true,
     include_in_mix_pack: true,
+    priority: 2,
   },
   {
     id: 'prod-3',
@@ -64,6 +66,7 @@ export const sampleProducts = [
     is_available: true,
     available_today: true,
     include_in_mix_pack: true,
+    priority: 3,
   },
   {
     id: 'prod-4',
@@ -81,6 +84,7 @@ export const sampleProducts = [
     is_available: true,
     available_today: true,
     include_in_mix_pack: false,
+    priority: 4,
   },
 ];
 

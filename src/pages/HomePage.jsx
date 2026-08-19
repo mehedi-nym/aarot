@@ -14,12 +14,14 @@ import { useProducts } from '../hooks/useProducts';
 
 function HomePage() {
   const [activeCategory, setActiveCategory] = useState('all');
+  const [productSearch, setProductSearch] = useState('');
   const { categories, todaysProducts, allTodaysProducts, settings, loading } =
-    useProducts(activeCategory);
+    useProducts(activeCategory, { searchQuery: productSearch });
   const activeCategoryName =
     activeCategory === 'all'
-      ? 'এই'
+      ? 'পণ্য'
       : categories.find((category) => category.id === activeCategory)?.name_bn || 'এই';
+  const trimmedProductSearch = productSearch.trim();
 
   const [isNextDay, setIsNextDay] = useState(false);
   const [timeLeft, setTimeLeft] = useState('');
@@ -160,7 +162,7 @@ const animateFly = (start, end, image) => {
 
         {/* PRODUCTS */}
         <section>
-          <div className="flex justify-between items-end mb-6">
+          <div className="mb-5 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
             <div>
               <h2 className="text-2xl font-black">লাইভ আড়ৎ</h2>
               <p className="text-slate-500">
@@ -174,6 +176,99 @@ const animateFly = (start, end, image) => {
               onChange={setActiveCategory}
             />
           </div>
+
+          <div className="mb-6 w-full">
+  <label htmlFor="product-search" className="sr-only">
+    পণ্য খুঁজুন
+  </label>
+
+  <div
+    className="
+      flex w-full items-center
+      rounded-2xl border border-slate-200
+      bg-white
+      p-2
+      shadow-sm
+      transition-all duration-200
+      hover:border-emerald-200
+      focus-within:border-emerald-400
+      focus-within:ring-4
+      focus-within:ring-emerald-100
+    "
+  >
+    {/* Search Icon */}
+    <div
+      className="
+        flex h-11 w-11 shrink-0
+        items-center justify-center
+        rounded-xl
+        bg-emerald-50
+        text-emerald-600
+      "
+      aria-hidden="true"
+    >
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        className="h-5 w-5"
+      >
+        <circle cx="11" cy="11" r="7" />
+        <path d="m20 20-4-4" />
+      </svg>
+    </div>
+
+    {/* Input */}
+    <input
+      id="product-search"
+      type="text"
+      value={productSearch}
+      onChange={(event) => setProductSearch(event.target.value)}
+      placeholder="পণ্য খুঁজুন..."
+      className="
+        min-w-0 flex-1
+        bg-transparent
+        px-3
+        py-3
+        text-sm
+        font-semibold
+        text-slate-900
+        outline-none
+        placeholder:text-slate-400
+        sm:px-4
+        sm:text-base
+      "
+    />
+
+    {/* Clear */}
+    {trimmedProductSearch && (
+      <button
+        type="button"
+        onClick={() => setProductSearch('')}
+        className="
+          shrink-0
+          rounded-xl
+          bg-slate-100
+          px-3
+          py-2
+          text-xs
+          font-bold
+          text-slate-600
+          transition
+          hover:bg-red-50
+          hover:text-red-600
+          active:scale-95
+          sm:px-4
+          sm:text-sm
+        "
+      >
+        মুছুন
+      </button>
+    )}
+  </div>
+</div>
 
           {loading ? (
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -189,13 +284,27 @@ const animateFly = (start, end, image) => {
               <p className="text-sm font-black tracking-widest text-emerald-600">
   ওহো!
 </p>
-              <h3 className="mt-3 text-2xl font-black text-slate-900">
-  আজ <span className="text-emerald-600">{activeCategoryName}</span> পাওয়া যাচ্ছে না
-</h3>
+              {trimmedProductSearch ? (
+                <>
+                  <h3 className="mt-3 text-2xl font-black text-slate-900">
+                    <span className="text-emerald-600">{trimmedProductSearch}</span> নামে কোনো পণ্য পাওয়া যায়নি
+                  </h3>
 
-<p className="mx-auto mt-3 max-w-md text-sm font-semibold leading-7 text-slate-500">
-  খুব শিগগিরই {activeCategoryName} বিভাগে নতুন আইটেম যোগ করা হবে। পরে আবার দেখে নিন।
-</p>
+                  <p className="mx-auto mt-3 max-w-md text-sm font-semibold leading-7 text-slate-500">
+                    অন্য নামে খুঁজে দেখুন, অথবা সব ক্যাটাগরি থেকে আবার চেষ্টা করুন।
+                  </p>
+                </>
+              ) : (
+                <>
+                  <h3 className="mt-3 text-2xl font-black text-slate-900">
+                    এখন <span className="text-emerald-600">{activeCategoryName}</span> পাওয়া যাচ্ছে না
+                  </h3>
+
+                  <p className="mx-auto mt-3 max-w-md text-sm font-semibold leading-7 text-slate-500">
+                    খুব শিগগিরই {activeCategoryName} বিভাগে নতুন আইটেম যোগ করা হবে। পরে আবার দেখে নিন।
+                  </p>
+                </>
+              )}
             </div>
           ) : (
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">

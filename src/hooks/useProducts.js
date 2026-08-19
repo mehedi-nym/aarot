@@ -2,7 +2,46 @@ import { useEffect, useMemo, useState } from 'react';
 import { fetchCategories, fetchProducts, fetchSettings } from '../lib/queries';
 import { hasSupabaseEnv, supabase } from '../lib/supabase';
 
-export function useProducts(activeCategory = 'all') {
+const normalizeSearchValue = (value) =>
+  String(value || '')
+    .toLowerCase()
+    .normalize('NFKD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[-_]+/g, ' ')
+    .trim();
+
+const getPriorityValue = (product) => {
+  const priority = Number(product.priority);
+  return Number.isFinite(priority) ? priority : Number.MAX_SAFE_INTEGER;
+};
+
+const sortByPriority = (left, right) => {
+  const priorityDiff = getPriorityValue(left) - getPriorityValue(right);
+  if (priorityDiff !== 0) return priorityDiff;
+
+  return new Date(right.created_at || 0).getTime() - new Date(left.created_at || 0).getTime();
+};
+
+const productMatchesSearch = (product, searchQuery) => {
+  const query = normalizeSearchValue(searchQuery);
+  if (!query) return true;
+
+  const searchableText = [
+    product.name_bn,
+    product.slug,
+    product.origin_bn,
+    product.sell_type,
+    product.categories?.name_bn,
+    product.categories?.slug,
+  ]
+    .map(normalizeSearchValue)
+    .join(' ');
+
+  return searchableText.includes(query);
+};
+
+export function useProducts(activeCategory = 'all', options = {}) {
+  const { searchQuery = '', includeUnavailable = false } = options;
   const [categories, setCategories] = useState([]);
   const [products, setProducts] = useState([]);
   const [settings, setSettings] = useState(null);
@@ -60,10 +99,22 @@ export function useProducts(activeCategory = 'all') {
     };
   }, []);
 
+  const visibleProducts = useMemo(() => {
+    const publicProducts = includeUnavailable
+      ? products
+      : products.filter((product) => product.is_available !== false);
+
+    return [...publicProducts].sort(sortByPriority);
+  }, [includeUnavailable, products]);
+
   const filteredProducts = useMemo(() => {
-    if (activeCategory === 'all') return products;
-    return products.filter((product) => product.category_id === activeCategory);
-  }, [activeCategory, products]);
+    const categoryProducts =
+      activeCategory === 'all'
+        ? visibleProducts
+        : visibleProducts.filter((product) => product.category_id === activeCategory);
+
+    return categoryProducts.filter((product) => productMatchesSearch(product, searchQuery));
+  }, [activeCategory, searchQuery, visibleProducts]);
 
   const todaysProducts = useMemo(
     () => filteredProducts,
@@ -71,14 +122,14 @@ export function useProducts(activeCategory = 'all') {
   );
 
   const allTodaysProducts = useMemo(
-    () => products,
-    [products],
+    () => visibleProducts,
+    [visibleProducts],
   );
 
   return {
     categories,
     products: filteredProducts,
-    allProducts: products,
+    allProducts: visibleProducts,
     todaysProducts,
     allTodaysProducts,
     settings,

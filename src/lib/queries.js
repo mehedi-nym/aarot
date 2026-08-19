@@ -60,6 +60,7 @@ export async function fetchProducts() {
         )
       `,
     )
+    .order('priority', { ascending: true, nullsFirst: false })
     .order('created_at', { ascending: false });
 
   if (error) throw error;
