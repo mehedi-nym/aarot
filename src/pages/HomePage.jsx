@@ -143,11 +143,21 @@ const animateFly = (start, end, image) => {
           <div className={`px-8 py-4 rounded-[1.8rem] flex items-center gap-3 ${
             isNextDay ? 'bg-amber-500' : 'bg-emerald-600'
           }`}>
-            <span>{isNextDay ? '🗓️' : '🚀'}</span>
-            <div>
-              <p className="text-[10px] uppercase font-black tracking-widest opacity-80">ডেলিভারি শিডিউল</p>
-              <p className="text-lg font-bold">{isNextDay ? "আগামীকাল ডেলিভারি" : "আজই ডেলিভারি"}</p>
-            </div>
+            <span className="flex items-center justify-center shrink-0">
+  <img 
+    src={
+      isNextDay 
+        ? "https://bmqsgrrrravkziwbmyll.supabase.co/storage/v1/object/public/asset/icons8-delivery-time-80.apng.png" 
+        : "https://bmqsgrrrravkziwbmyll.supabase.co/storage/v1/object/public/asset/icons8-in-transit-80.apng.png"
+    } 
+    alt="Delivery Schedule Icon" 
+    className="w-12 h-12 object-contain"
+  />
+</span>
+<div>
+  <p className="text-[10px] uppercase font-black tracking-widest opacity-80">ডেলিভারি শিডিউল</p>
+  <p className="text-lg font-bold">{isNextDay ? "আগামীকাল ডেলিভারি" : "আজই ডেলিভারি"}</p>
+</div>
           </div>
 
           <div className="py-4 md:py-0 text-center md:text-right"> 
