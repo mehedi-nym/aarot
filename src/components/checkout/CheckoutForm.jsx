@@ -1,4 +1,4 @@
-import { AREA_OPTIONS } from '../../lib/constants';
+import { getAreaName } from '../../lib/utils';
 
 function CheckoutForm({
   form,
@@ -8,6 +8,7 @@ function CheckoutForm({
   settings,
   isEligible,
   error,
+  deliveryAreas = [],
 }) {
   return (
     <form className="section-shell p-4 sm:p-5 md:p-6" onSubmit={onSubmit}>
@@ -82,9 +83,9 @@ function CheckoutForm({
             onChange={(e) => onChange('area', e.target.value)}
           >
             <option value="">এরিয়া নির্বাচন করুন</option>
-            {AREA_OPTIONS.map((area) => (
+            {deliveryAreas.map((area) => (
               <option key={area.slug} value={area.slug}>
-                {area.name}
+                {getAreaName(area)}
               </option>
             ))}
           </select>

@@ -1,7 +1,12 @@
 import React from 'react';
-import { formatBanglaTime } from '../lib/utils';
+import { formatBanglaTime, getAreaName } from '../lib/utils';
 
-function DeliveryBanner({ settings }) {
+function DeliveryBanner({ settings, deliveryAreas = [] }) {
+  const serviceAreaNames = deliveryAreas.map(getAreaName).filter(Boolean);
+  const serviceAreaText = serviceAreaNames.length
+    ? `${serviceAreaNames.join(' · ')} কভারেজে`
+    : 'আপনার এলাকার মধ্যে ডেলিভারি সুবিধা';
+
   return (
     <section className="relative overflow-hidden rounded-[24px] bg-[#F7F4EA] shadow-[0_8px_28px_rgba(20,60,35,0.09)] ring-1 ring-[#DDE7D8]">
       {/* Decorative background ambient glows */}
@@ -72,7 +77,7 @@ function DeliveryBanner({ settings }) {
             আড়ৎ থেকে টাটকা পণ্য 
             <br />
             <span className="relative inline-block text-[#3E7A4E] pt-1 pb-1">
-              পোছে যাবে আপানার ঠিকানায়। 
+              পোছে যাবে আপনার ঠিকানায়। 
             
               <span className="absolute -bottom-1 left-0  h-[3px] w-2/3 rounded-full bg-[#F0C94A]" />
             </span>
@@ -95,7 +100,7 @@ function DeliveryBanner({ settings }) {
                   ডেলিভারি শুরু
                 </div>
                 <div className="text-sm font-black tabular-nums text-[#173C2A] sm:text-base">
-                  {formatBanglaTime(settings?.delivery_start_time)}
+                  {formatBanglaTime(settings?.delivery_start_time_time || settings?.delivery_start_time)}
                 </div>
               </div>
             </div>
@@ -185,7 +190,7 @@ function DeliveryBanner({ settings }) {
       {/* Bottom strip */}
       <div className="relative z-10 flex flex-col gap-1 border-t border-[#DDE7D8] bg-white/50 px-4 py-2.5 sm:flex-row sm:items-center sm:justify-between sm:px-6 md:px-8">
         <p className="text-[10px] font-semibold text-[#647268]">
-          📍 ধানমণ্ডি · লালমাটিয়া · মোহাম্মদপুর · আদাবর · শ্যামলী কভারেজে
+          📍 {serviceAreaText}
         </p>
 
         <p className="text-[10px] font-bold text-[#3E7A4E]">

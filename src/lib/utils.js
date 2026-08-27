@@ -36,21 +36,33 @@ export const formatBanglaTime = (timeValue) => {
 
 export const getSellTypeMeta = (sellType) => SELL_TYPES[sellType] || SELL_TYPES.kg;
 
-export const getAreaMeta = (slug) =>
-  AREA_OPTIONS.find((area) => area.slug === slug) || AREA_OPTIONS[0];
+export const getAreaDistanceKm = (area) =>
+  Number(area?.distance_km ?? area?.distanceKm ?? 0);
 
-export const calculateDeliveryCharge = (settings, areaSlug) => {
-  const area = getAreaMeta(areaSlug);
+export const getAreaName = (area) => area?.name_bn || area?.name || '';
+
+export const getAreaMeta = (slug, areas = AREA_OPTIONS) => {
+  const availableAreas = areas.length ? areas : AREA_OPTIONS;
+  return availableAreas.find((area) => area.slug === slug) || availableAreas[0];
+};
+
+export const calculateDeliveryCharge = (settings, areaSlug, areas = AREA_OPTIONS) => {
+  const area = getAreaMeta(areaSlug, areas);
+  const overrideFee = Number(area?.delivery_fee_override);
+  if (Number.isFinite(overrideFee) && overrideFee >= 0) return overrideFee;
+
   const baseCharge = Number(settings?.base_delivery_charge || 0);
   const perKmCharge = Number(settings?.per_km_delivery_charge || 0);
-  const extraDistance = Math.max(0, area.distanceKm - 2);
+  const extraDistance = Math.max(0, getAreaDistanceKm(area) - 2);
 
   return baseCharge + extraDistance * perKmCharge;
 };
 
-export const isAreaEligible = (settings, areaSlug) => {
-  const area = getAreaMeta(areaSlug);
-  return area.distanceKm <= Number(settings?.delivery_radius_km || 0);
+export const isAreaEligible = (settings, areaSlug, areas = AREA_OPTIONS) => {
+  const area = getAreaMeta(areaSlug, areas);
+  if (!area || area.is_active === false) return false;
+
+  return getAreaDistanceKm(area) <= Number(settings?.delivery_radius_km || 0);
 };
 
 export const getOrderDeliveryInfo = (settings) => {

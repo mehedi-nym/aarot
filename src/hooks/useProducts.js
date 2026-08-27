@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { fetchCategories, fetchProducts, fetchSettings } from '../lib/queries';
+import { fetchCategories, fetchDeliveryAreas, fetchProducts, fetchSettings } from '../lib/queries';
 import { hasSupabaseEnv, supabase } from '../lib/supabase';
 
 const normalizeSearchValue = (value) =>
@@ -43,6 +43,7 @@ const productMatchesSearch = (product, searchQuery) => {
 export function useProducts(activeCategory = 'all', options = {}) {
   const { searchQuery = '', includeUnavailable = false } = options;
   const [categories, setCategories] = useState([]);
+  const [deliveryAreas, setDeliveryAreas] = useState([]);
   const [products, setProducts] = useState([]);
   const [settings, setSettings] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -51,15 +52,17 @@ export function useProducts(activeCategory = 'all', options = {}) {
   const loadData = async () => {
     try {
       setLoading(true);
-      const [categoryData, productData, settingData] = await Promise.all([
+      const [categoryData, productData, settingData, deliveryAreaData] = await Promise.all([
         fetchCategories(),
         fetchProducts(),
         fetchSettings(),
+        fetchDeliveryAreas({ includeInactive: includeUnavailable }),
       ]);
 
       setCategories(categoryData);
       setProducts(productData);
       setSettings(settingData);
+      setDeliveryAreas(deliveryAreaData);
       setError('');
     } catch (loadError) {
       setError(loadError.message || 'ডাটা লোড করা যায়নি');
@@ -90,6 +93,11 @@ export function useProducts(activeCategory = 'all', options = {}) {
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'site_settings' },
+        () => loadData(),
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'delivery_areas' },
         () => loadData(),
       )
       .subscribe();
@@ -128,6 +136,7 @@ export function useProducts(activeCategory = 'all', options = {}) {
 
   return {
     categories,
+    deliveryAreas,
     products: filteredProducts,
     allProducts: visibleProducts,
     todaysProducts,

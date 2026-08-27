@@ -11,6 +11,7 @@ import {
   calculateDeliveryCharge,
   formatBanglaCurrency,
   getAreaMeta,
+  getAreaName,
   getOrderDeliveryInfo,
   isAreaEligible,
 } from '../lib/utils';
@@ -26,7 +27,7 @@ const INITIAL_FORM = {
 
 function CheckoutPage() {
   const { items, subtotal, clearCart } = useCart();
-  const { settings } = useProducts();
+  const { deliveryAreas, settings } = useProducts();
   const { submitOrder, submitting, error: orderError } = useOrders();
 
   // ✅ Load cached form (without transactionId)
@@ -55,6 +56,18 @@ function CheckoutPage() {
     const { transactionId, ...rest } = form;
     localStorage.setItem('checkout_form', JSON.stringify(rest));
   }, [form]);
+
+  useEffect(() => {
+    if (!deliveryAreas.length) return;
+
+    const hasSelectedArea = deliveryAreas.some((area) => area.slug === form.area);
+    if (!hasSelectedArea) {
+      setForm((current) => ({
+        ...current,
+        area: deliveryAreas[0].slug,
+      }));
+    }
+  }, [deliveryAreas, form.area]);
 
   // ✅ Handle change
   const handleChange = (field, value) => {
@@ -86,8 +99,8 @@ function CheckoutPage() {
 
   const deliveryCharge = useMemo(() => {
     if (isFreeDelivery) return 0;
-    return calculateDeliveryCharge(settings, form.area);
-  }, [settings, form.area, isFreeDelivery]);
+    return calculateDeliveryCharge(settings, form.area, deliveryAreas);
+  }, [deliveryAreas, settings, form.area, isFreeDelivery]);
 
   const discountAmount = useMemo(() => {
     if (!appliedCoupon) return 0;
@@ -102,7 +115,7 @@ function CheckoutPage() {
   const safeDiscount = Math.min(discountAmount, numericSubtotal);
   const totalAmount = numericSubtotal + deliveryCharge - safeDiscount;
 
-  const eligible = isAreaEligible(settings, form.area);
+  const eligible = isAreaEligible(settings, form.area, deliveryAreas);
 
   // --- Coupon ---
   const handleApplyCoupon = async () => {
@@ -151,13 +164,14 @@ function CheckoutPage() {
 
     const deliveryInfo = getOrderDeliveryInfo(settings);
     const orderCode = buildOrderCode();
+    const selectedArea = getAreaMeta(form.area, deliveryAreas);
 
     const payload = {
       customer_name: form.name,
       phone: form.phone,
       address_bn: form.address,
       area: form.area,
-      area_name_bn: getAreaMeta(form.area).name,
+      area_name_bn: getAreaName(selectedArea),
       payment_method: form.paymentMethod,
       bkash_transaction_id:
         form.paymentMethod === 'bkash' ? form.transactionId : null,
@@ -284,6 +298,7 @@ setForm((prev) => ({
           settings={settings}
           isEligible={eligible}
           error={orderError}
+          deliveryAreas={deliveryAreas}
         />
 
         {/* Right */}

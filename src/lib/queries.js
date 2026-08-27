@@ -1,9 +1,16 @@
-import { sampleCategories, sampleOrders, sampleProducts, sampleSettings } from './sampleData';
+import {
+  sampleCategories,
+  sampleDeliveryAreas,
+  sampleOrders,
+  sampleProducts,
+  sampleSettings,
+} from './sampleData';
 import { hasSupabaseEnv, supabase } from './supabase';
 import { buildOrderCode, safeJsonParse, sortByDateDesc } from './utils';
 
 const LOCAL_SETTINGS_KEY = 'aarot-settings';
 const LOCAL_CATEGORIES_KEY = 'aarot-categories';
+const LOCAL_DELIVERY_AREAS_KEY = 'aarot-delivery-areas';
 const LOCAL_PRODUCTS_KEY = 'aarot-products';
 const LOCAL_ORDERS_KEY = 'aarot-orders';
 
@@ -42,6 +49,32 @@ export async function fetchCategories() {
     .order('sort_order', { ascending: true });
 
   if (error) throw error;
+  return data;
+}
+
+export async function fetchDeliveryAreas({ includeInactive = false } = {}) {
+  if (!hasSupabaseEnv) {
+    const areas = readLocalValue(LOCAL_DELIVERY_AREAS_KEY, sampleDeliveryAreas);
+    return includeInactive ? areas : areas.filter((area) => area.is_active !== false);
+  }
+
+  let query = supabase
+    .from('delivery_areas')
+    .select('*')
+    .order('sort_order', { ascending: true })
+    .order('name_bn', { ascending: true });
+
+  if (!includeInactive) {
+    query = query.eq('is_active', true);
+  }
+
+  const { data, error } = await query;
+
+  if (error) {
+    console.warn('Delivery areas could not be loaded from Supabase:', error.message);
+    return sampleDeliveryAreas.filter((area) => includeInactive || area.is_active !== false);
+  }
+
   return data;
 }
 
@@ -205,6 +238,27 @@ export async function saveCategory(category) {
   };
 
   const { data, error } = await supabase.from('categories').upsert(payload).select().single();
+  if (error) throw error;
+  return data;
+}
+
+export async function saveDeliveryArea(area) {
+  if (!hasSupabaseEnv) {
+    const areas = readLocalValue(LOCAL_DELIVERY_AREAS_KEY, sampleDeliveryAreas);
+    const payload = { ...area, id: area.id || crypto.randomUUID() };
+    const updated = area.id
+      ? areas.map((item) => (item.id === area.id ? payload : item))
+      : [...areas, payload];
+    writeLocalValue(LOCAL_DELIVERY_AREAS_KEY, updated);
+    return payload;
+  }
+
+  const payload = {
+    ...area,
+    updated_at: new Date().toISOString(),
+  };
+
+  const { data, error } = await supabase.from('delivery_areas').upsert(payload).select().single();
   if (error) throw error;
   return data;
 }

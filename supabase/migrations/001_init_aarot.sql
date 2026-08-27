@@ -45,10 +45,22 @@ create table if not exists public.site_settings (
   delivery_notice_bn text not null,
   delivery_radius_km numeric(10,2) not null default 6,
   base_delivery_charge numeric(10,2) not null default 40,
-  per_km_delivery_charge numeric(10,2) not null default 10,
+  per_km_delivery_charge numeric(10,2) not null default 5,
   bkash_number text not null,
   mix_pack_enabled boolean not null default true,
   delivery_start_time_time time not null default '14:00:00',
+  created_at timestamptz not null default timezone('utc', now()),
+  updated_at timestamptz not null default timezone('utc', now())
+);
+
+create table if not exists public.delivery_areas (
+  id uuid primary key default gen_random_uuid(),
+  slug text not null unique,
+  name_bn text not null,
+  distance_km numeric(10,2) not null default 0,
+  delivery_fee_override numeric(10,2),
+  sort_order integer not null default 1,
+  is_active boolean not null default true,
   created_at timestamptz not null default timezone('utc', now()),
   updated_at timestamptz not null default timezone('utc', now())
 );
@@ -114,6 +126,12 @@ before update on public.site_settings
 for each row
 execute function public.set_updated_at();
 
+drop trigger if exists set_delivery_areas_updated_at on public.delivery_areas;
+create trigger set_delivery_areas_updated_at
+before update on public.delivery_areas
+for each row
+execute function public.set_updated_at();
+
 drop trigger if exists set_orders_updated_at on public.orders;
 create trigger set_orders_updated_at
 before update on public.orders
@@ -144,6 +162,7 @@ $$;
 alter table public.categories enable row level security;
 alter table public.products enable row level security;
 alter table public.site_settings enable row level security;
+alter table public.delivery_areas enable row level security;
 alter table public.orders enable row level security;
 alter table public.order_items enable row level security;
 alter table public.admin_profiles enable row level security;
@@ -178,6 +197,17 @@ using (true);
 drop policy if exists "admin manage settings" on public.site_settings;
 create policy "admin manage settings"
 on public.site_settings for all
+using (public.is_admin())
+with check (public.is_admin());
+
+drop policy if exists "public read active delivery areas" on public.delivery_areas;
+create policy "public read active delivery areas"
+on public.delivery_areas for select
+using (is_active = true);
+
+drop policy if exists "admin manage delivery areas" on public.delivery_areas;
+create policy "admin manage delivery areas"
+on public.delivery_areas for all
 using (public.is_admin())
 with check (public.is_admin());
 
@@ -502,7 +532,7 @@ values (
   'আজ দুপুর ২টার আগে অর্ডার করলে আজই ডেলিভারি, এরপরের অর্ডার যাবে পরের দিনের স্লটে।',
   6,
   40,
-  10,
+  5,
   '01711-223344',
   true,
   '14:00:00'
@@ -516,6 +546,20 @@ set
   bkash_number = excluded.bkash_number,
   mix_pack_enabled = excluded.mix_pack_enabled,
   delivery_start_time_time = excluded.delivery_start_time_time;
+
+insert into public.delivery_areas (slug, name_bn, distance_km, sort_order, is_active)
+values
+  ('dhanmondi', 'ধানমন্ডি', 3, 1, true),
+  ('mohammadpur', 'মোহাম্মদপুর', 5, 2, true),
+  ('lalmatia', 'লালমাটিয়া', 4, 3, true),
+  ('adabor', 'আদাবর', 6, 4, true),
+  ('shyamoli', 'শ্যামলী', 6, 5, true)
+on conflict (slug) do update
+set
+  name_bn = excluded.name_bn,
+  distance_km = excluded.distance_km,
+  sort_order = excluded.sort_order,
+  is_active = excluded.is_active;
 
 insert into public.products (
   id,

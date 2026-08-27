@@ -1,17 +1,19 @@
-import { CATEGORY_FALLBACKS } from './constants';
+import { CATEGORY_FALLBACKS, DELIVERY_AREA_FALLBACKS } from './constants';
 
 export const sampleSettings = {
   id: 1,
   delivery_notice_bn: 'আজ দুপুর ২টার আগে অর্ডার করলে আজই ডেলিভারি, এরপরের অর্ডার যাবে পরের দিনের স্লটে।',
   delivery_radius_km: 6,
   base_delivery_charge: 40,
-  per_km_delivery_charge: 10,
+  per_km_delivery_charge: 5,
   bkash_number: '01711-223344',
   mix_pack_enabled: true,
   delivery_start_time_time: '14:00:00',
 };
 
 export const sampleCategories = CATEGORY_FALLBACKS;
+
+export const sampleDeliveryAreas = DELIVERY_AREA_FALLBACKS;
 
 export const sampleProducts = [
   {

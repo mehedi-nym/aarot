@@ -15,7 +15,7 @@ import { useProducts } from '../hooks/useProducts';
 function HomePage() {
   const [activeCategory, setActiveCategory] = useState('all');
   const [productSearch, setProductSearch] = useState('');
-  const { categories, todaysProducts, allTodaysProducts, settings, loading } =
+  const { categories, deliveryAreas, todaysProducts, allTodaysProducts, settings, loading } =
     useProducts(activeCategory, { searchQuery: productSearch });
   const activeCategoryName =
     activeCategory === 'all'
@@ -136,7 +136,7 @@ const animateFly = (start, end, image) => {
       <div className="mx-auto max-w-7xl px-4 py-6 space-y-10">
 
         {/* DELIVERY */}
-        <DeliveryBanner settings={settings} />
+        <DeliveryBanner settings={settings} deliveryAreas={deliveryAreas} />
 
         {/* STATUS BAR */}
         <section className="flex flex-col md:flex-row justify-between items-center bg-slate-900 text-white rounded-[2rem] p-4">
