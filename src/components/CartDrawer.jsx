@@ -1,6 +1,6 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { useCart } from '../hooks/useCart';
-import { formatBanglaCurrency, getSellTypeMeta } from '../lib/utils';
+import { formatBanglaCurrency, getProductPrice, getSellTypeMeta } from '../lib/utils';
 import { useNavigate } from 'react-router-dom';
 
 function CartDrawer({ isOpen, onClose }) {
@@ -104,7 +104,7 @@ function CartDrawer({ isOpen, onClose }) {
                               </p>
                             )}
                             <p className="text-emerald-600 font-black text-base">
-                              {formatBanglaCurrency(item.price)} 
+                              {formatBanglaCurrency(getProductPrice(item))} 
                               <span className="text-slate-400 text-[10px] font-medium ml-1">
                                   x{item.quantity} {getSellTypeMeta(item.sell_type).label}
                               </span>

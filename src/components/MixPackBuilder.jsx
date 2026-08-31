@@ -3,6 +3,7 @@ import { useCart } from '../hooks/useCart.jsx';
 import {
   formatBanglaCurrency,
   formatBanglaNumber,
+  getProductPrice,
   getSellTypeMeta,
 } from '../lib/utils';
 
@@ -31,7 +32,7 @@ const CUT_OPTIONS = [
 ];
 
 const getMixUnitMeta = (product) => {
-  const price = Number(product.price || 0);
+  const price = getProductPrice(product);
   const sellType = product.sell_type;
 
   if (sellType === 'piece') {

@@ -2,7 +2,9 @@ import {
   sampleCategories,
   sampleDeliveryAreas,
   sampleOrders,
+  sampleContentPages,
   sampleProducts,
+  samplePromotionalBanners,
   sampleSettings,
 } from './sampleData';
 import { hasSupabaseEnv, supabase } from './supabase';
@@ -11,6 +13,8 @@ import { buildOrderCode, safeJsonParse, sortByDateDesc } from './utils';
 const LOCAL_SETTINGS_KEY = 'aarot-settings';
 const LOCAL_CATEGORIES_KEY = 'aarot-categories';
 const LOCAL_DELIVERY_AREAS_KEY = 'aarot-delivery-areas';
+const LOCAL_CONTENT_PAGES_KEY = 'aarot-content-pages';
+const LOCAL_PROMOTIONAL_BANNERS_KEY = 'aarot-promotional-banners';
 const LOCAL_PRODUCTS_KEY = 'aarot-products';
 const LOCAL_ORDERS_KEY = 'aarot-orders';
 
@@ -97,6 +101,63 @@ export async function fetchProducts() {
     .order('created_at', { ascending: false });
 
   if (error) throw error;
+  return data;
+}
+
+export async function fetchPromotionalBanners({ placement = 'home_popup' } = {}) {
+  const now = new Date().toISOString();
+  const allowedPlacements = placement ? [placement, 'popup', 'home', null, undefined, ''] : [];
+
+  const isLiveBanner = (banner) => {
+    if (banner.is_active === false) return false;
+    if (placement && !allowedPlacements.includes(banner.placement)) return false;
+    if (banner.starts_at && new Date(banner.starts_at) > new Date(now)) return false;
+    if (banner.ends_at && new Date(banner.ends_at) < new Date(now)) return false;
+    return true;
+  };
+
+  if (!hasSupabaseEnv) {
+    return readLocalValue(LOCAL_PROMOTIONAL_BANNERS_KEY, samplePromotionalBanners)
+      .filter(isLiveBanner)
+      .sort((left, right) => Number(left.priority || 999) - Number(right.priority || 999));
+  }
+
+  let query = supabase
+    .from('promotional_banners')
+    .select('*')
+    .eq('is_active', true)
+    .order('priority', { ascending: true, nullsFirst: false })
+    .order('created_at', { ascending: false });
+
+  const { data, error } = await query;
+  if (error) {
+    console.warn('Promotional banners could not be loaded from Supabase:', error.message);
+    return samplePromotionalBanners.filter(isLiveBanner);
+  }
+
+  return (data || []).filter(isLiveBanner);
+}
+
+export async function fetchContentPage(slug) {
+  if (!slug) return null;
+
+  if (!hasSupabaseEnv) {
+    const pages = readLocalValue(LOCAL_CONTENT_PAGES_KEY, sampleContentPages);
+    return pages.find((page) => page.slug === slug && page.is_published !== false) || null;
+  }
+
+  const { data, error } = await supabase
+    .from('content_pages')
+    .select('*')
+    .eq('slug', slug)
+    .eq('is_published', true)
+    .maybeSingle();
+
+  if (error) {
+    console.warn('Content page could not be loaded from Supabase:', error.message);
+    return sampleContentPages.find((page) => page.slug === slug && page.is_published !== false) || null;
+  }
+
   return data;
 }
 

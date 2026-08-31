@@ -36,6 +36,28 @@ export const formatBanglaTime = (timeValue) => {
 
 export const getSellTypeMeta = (sellType) => SELL_TYPES[sellType] || SELL_TYPES.kg;
 
+export const hasActiveOffer = (product) => {
+  const price = Number(product?.price || 0);
+  const offerPrice = Number(product?.offer_price || 0);
+  const regularPrice = Number(product?.regular_price || 0);
+  const now = new Date();
+  const startsAt = product?.offer_starts_at ? new Date(product.offer_starts_at) : null;
+  const endsAt = product?.offer_ends_at ? new Date(product.offer_ends_at) : null;
+
+  if (startsAt && startsAt > now) return false;
+  if (endsAt && endsAt < now) return false;
+
+  return (offerPrice > 0 && offerPrice < price) || (regularPrice > 0 && price < regularPrice);
+};
+
+export const getProductPrice = (product) => {
+  const price = Number(product?.price || 0);
+  const offerPrice = Number(product?.offer_price || 0);
+
+  if (!hasActiveOffer(product)) return price;
+  return offerPrice > 0 && offerPrice < price ? offerPrice : price;
+};
+
 export const getAreaDistanceKm = (area) =>
   Number(area?.distance_km ?? area?.distanceKm ?? 0);
 

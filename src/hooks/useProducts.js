@@ -1,6 +1,13 @@
 import { useEffect, useMemo, useState } from 'react';
-import { fetchCategories, fetchDeliveryAreas, fetchProducts, fetchSettings } from '../lib/queries';
+import {
+  fetchCategories,
+  fetchDeliveryAreas,
+  fetchProducts,
+  fetchPromotionalBanners,
+  fetchSettings,
+} from '../lib/queries';
 import { hasSupabaseEnv, supabase } from '../lib/supabase';
+import { hasActiveOffer } from '../lib/utils';
 
 const normalizeSearchValue = (value) =>
   String(value || '')
@@ -45,6 +52,7 @@ export function useProducts(activeCategory = 'all', options = {}) {
   const [categories, setCategories] = useState([]);
   const [deliveryAreas, setDeliveryAreas] = useState([]);
   const [products, setProducts] = useState([]);
+  const [promotionalBanners, setPromotionalBanners] = useState([]);
   const [settings, setSettings] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -52,17 +60,25 @@ export function useProducts(activeCategory = 'all', options = {}) {
   const loadData = async () => {
     try {
       setLoading(true);
-      const [categoryData, productData, settingData, deliveryAreaData] = await Promise.all([
+      const [
+        categoryData,
+        productData,
+        settingData,
+        deliveryAreaData,
+        promotionalBannerData,
+      ] = await Promise.all([
         fetchCategories(),
         fetchProducts(),
         fetchSettings(),
         fetchDeliveryAreas({ includeInactive: includeUnavailable }),
+        fetchPromotionalBanners({ placement: 'home_popup' }),
       ]);
 
       setCategories(categoryData);
       setProducts(productData);
       setSettings(settingData);
       setDeliveryAreas(deliveryAreaData);
+      setPromotionalBanners(promotionalBannerData);
       setError('');
     } catch (loadError) {
       setError(loadError.message || 'ডাটা লোড করা যায়নি');
@@ -100,6 +116,11 @@ export function useProducts(activeCategory = 'all', options = {}) {
         { event: '*', schema: 'public', table: 'delivery_areas' },
         () => loadData(),
       )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'promotional_banners' },
+        () => loadData(),
+      )
       .subscribe();
 
     return () => {
@@ -134,6 +155,11 @@ export function useProducts(activeCategory = 'all', options = {}) {
     [visibleProducts],
   );
 
+  const offerProducts = useMemo(
+    () => visibleProducts.filter(hasActiveOffer),
+    [visibleProducts],
+  );
+
   return {
     categories,
     deliveryAreas,
@@ -141,6 +167,8 @@ export function useProducts(activeCategory = 'all', options = {}) {
     allProducts: visibleProducts,
     todaysProducts,
     allTodaysProducts,
+    offerProducts,
+    promotionalBanners,
     settings,
     loading,
     error,

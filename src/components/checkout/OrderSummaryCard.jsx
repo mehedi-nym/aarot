@@ -1,7 +1,9 @@
 import {
   formatBanglaCurrency,
   formatBanglaNumber,
+  getProductPrice,
   getSellTypeMeta,
+  hasActiveOffer,
 } from '../../lib/utils';
 
 function OrderSummaryCard({
@@ -37,7 +39,11 @@ function OrderSummaryCard({
 
         {/* Item List */}
         <div className="max-h-[360px] space-y-3 overflow-y-auto pr-1 custom-scrollbar sm:max-h-[400px] sm:pr-2">
-          {items.map((item) => (
+          {items.map((item) => {
+            const itemPrice = getProductPrice(item);
+            const itemHasOffer = hasActiveOffer(item);
+
+            return (
             <div
               key={item.id}
               className="grid grid-cols-[auto,minmax(0,1fr)] gap-3 rounded-2xl border border-brand-50 bg-white/70 px-3 py-3 sm:flex sm:items-center sm:gap-4"
@@ -66,19 +72,25 @@ function OrderSummaryCard({
                 <p className="mt-1 text-xs font-bold text-slate-500">
                   {item.quantity}{' '}
                   {getSellTypeMeta(item.sell_type).shortLabel} x{' '}
-                  {formatBanglaCurrency(item.price)}
+                  {formatBanglaCurrency(itemPrice)}
                 </p>
+                {itemHasOffer && (
+                  <p className="mt-1 text-[10px] font-bold text-red-500">
+                    অফার মূল্য, আগের দাম <span className="line-through">{formatBanglaCurrency(item.regular_price || item.price)}</span>
+                  </p>
+                )}
               </div>
 
               <div className="col-span-2 border-t border-brand-50 pt-2 text-right sm:col-span-1 sm:border-0 sm:pt-0">
                 <p className="font-black text-slate-900 text-sm">
                   {formatBanglaCurrency(
-                    Number(item.price) * Number(item.quantity)
+                    Number(itemPrice) * Number(item.quantity)
                   )}
                 </p>
               </div>
             </div>
-          ))}
+          );
+          })}
         </div>
 
         {/* 🔥 FREE DELIVERY PROGRESS (NEW FEATURE) */}

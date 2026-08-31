@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useMemo, useState } from 'react';
-import { getSellTypeMeta, safeJsonParse } from '../lib/utils';
+import { getProductPrice, getSellTypeMeta, safeJsonParse } from '../lib/utils';
 
 const CartContext = createContext(null);
 const STORAGE_KEY = 'aarot-cart';
@@ -84,7 +84,7 @@ export function CartProvider({ children }) {
 
     return safeItems.reduce(
       (sum, item) =>
-        sum + Number(item.price || 0) * Number(item.quantity || 0),
+        sum + getProductPrice(item) * Number(item.quantity || 0),
       0
     );
   }, [items]);

@@ -29,6 +29,11 @@ create table if not exists public.products (
   origin_bn text not null,
   sell_type text not null check (sell_type in ('piece', 'kg', 'gram')),
   price numeric(10,2) not null default 0,
+  offer_price numeric(10,2),
+  offer_starts_at timestamptz,
+  offer_ends_at timestamptz,
+  offer_badge_bn text,
+  offer_badge_en text,
   stock_quantity numeric(10,2) not null default 0,
   quantity_step numeric(10,2) not null default 1,
   minimum_quantity numeric(10,2) not null default 1,
@@ -65,6 +70,48 @@ create table if not exists public.delivery_areas (
   updated_at timestamptz not null default timezone('utc', now())
 );
 
+create table if not exists public.promotional_banners (
+  id uuid primary key default gen_random_uuid(),
+  placement text not null default 'home_popup',
+  title_bn text not null,
+  title_en text,
+  description_bn text,
+  description_en text,
+  media_url text not null,
+  media_type text not null default 'image' check (media_type in ('image', 'video')),
+  alt_text_bn text not null,
+  alt_text_en text,
+  link_url text,
+  button_label_bn text,
+  button_label_en text,
+  seo_title_bn text,
+  seo_title_en text,
+  seo_description_bn text,
+  seo_description_en text,
+  starts_at timestamptz,
+  ends_at timestamptz,
+  priority integer,
+  is_active boolean not null default true,
+  created_at timestamptz not null default timezone('utc', now()),
+  updated_at timestamptz not null default timezone('utc', now())
+);
+
+create table if not exists public.content_pages (
+  id uuid primary key default gen_random_uuid(),
+  slug text not null unique,
+  title_bn text not null,
+  title_en text,
+  body_bn text not null,
+  body_en text,
+  seo_title_bn text,
+  seo_title_en text,
+  seo_description_bn text,
+  seo_description_en text,
+  is_published boolean not null default true,
+  created_at timestamptz not null default timezone('utc', now()),
+  updated_at timestamptz not null default timezone('utc', now())
+);
+
 create table if not exists public.orders (
   id uuid primary key default gen_random_uuid(),
   order_code text not null unique,
@@ -93,6 +140,7 @@ create table if not exists public.order_items (
   product_id uuid references public.products(id) on delete set null,
   product_name_bn text not null,
   product_image_url text,
+  regular_price numeric(10,2),
   sell_type text not null check (sell_type in ('piece', 'kg', 'gram')),
   unit_price numeric(10,2) not null default 0,
   quantity numeric(10,2) not null default 1,
@@ -132,6 +180,18 @@ before update on public.delivery_areas
 for each row
 execute function public.set_updated_at();
 
+drop trigger if exists set_promotional_banners_updated_at on public.promotional_banners;
+create trigger set_promotional_banners_updated_at
+before update on public.promotional_banners
+for each row
+execute function public.set_updated_at();
+
+drop trigger if exists set_content_pages_updated_at on public.content_pages;
+create trigger set_content_pages_updated_at
+before update on public.content_pages
+for each row
+execute function public.set_updated_at();
+
 drop trigger if exists set_orders_updated_at on public.orders;
 create trigger set_orders_updated_at
 before update on public.orders
@@ -163,6 +223,8 @@ alter table public.categories enable row level security;
 alter table public.products enable row level security;
 alter table public.site_settings enable row level security;
 alter table public.delivery_areas enable row level security;
+alter table public.promotional_banners enable row level security;
+alter table public.content_pages enable row level security;
 alter table public.orders enable row level security;
 alter table public.order_items enable row level security;
 alter table public.admin_profiles enable row level security;
@@ -208,6 +270,28 @@ using (is_active = true);
 drop policy if exists "admin manage delivery areas" on public.delivery_areas;
 create policy "admin manage delivery areas"
 on public.delivery_areas for all
+using (public.is_admin())
+with check (public.is_admin());
+
+drop policy if exists "public read active promotional banners" on public.promotional_banners;
+create policy "public read active promotional banners"
+on public.promotional_banners for select
+using (is_active = true);
+
+drop policy if exists "admin manage promotional banners" on public.promotional_banners;
+create policy "admin manage promotional banners"
+on public.promotional_banners for all
+using (public.is_admin())
+with check (public.is_admin());
+
+drop policy if exists "public read published content pages" on public.content_pages;
+create policy "public read published content pages"
+on public.content_pages for select
+using (is_published = true);
+
+drop policy if exists "admin manage content pages" on public.content_pages;
+create policy "admin manage content pages"
+on public.content_pages for all
 using (public.is_admin())
 with check (public.is_admin());
 
@@ -291,6 +375,7 @@ begin
       product_id,
       product_name_bn,
       product_image_url,
+      regular_price,
       sell_type,
       unit_price,
       quantity,
@@ -301,6 +386,7 @@ begin
       nullif(item->>'product_id', '')::uuid,
       item->>'product_name_bn',
       nullif(item->>'product_image_url', ''),
+      nullif(item->>'regular_price', '')::numeric,
       item->>'sell_type',
       coalesce((item->>'unit_price')::numeric, 0),
       coalesce((item->>'quantity')::numeric, 0),
@@ -359,6 +445,7 @@ as $$
           'id', oi.id,
           'product_name_bn', oi.product_name_bn,
           'image_url', coalesce(oi.product_image_url, p.image_url),
+          'regular_price', oi.regular_price,
           'sell_type', oi.sell_type,
           'unit_price', oi.unit_price,
           'quantity', oi.quantity,
@@ -422,6 +509,7 @@ as $$
           'id', oi.id,
           'product_name_bn', oi.product_name_bn,
           'image_url', coalesce(oi.product_image_url, p.image_url),
+          'regular_price', oi.regular_price,
           'sell_type', oi.sell_type,
           'unit_price', oi.unit_price,
           'quantity', oi.quantity,
@@ -485,6 +573,7 @@ as $$
           'id', oi.id,
           'product_name_bn', oi.product_name_bn,
           'image_url', coalesce(oi.product_image_url, p.image_url),
+          'regular_price', oi.regular_price,
           'sell_type', oi.sell_type,
           'unit_price', oi.unit_price,
           'quantity', oi.quantity,
@@ -561,6 +650,104 @@ set
   sort_order = excluded.sort_order,
   is_active = excluded.is_active;
 
+insert into public.promotional_banners (
+  placement,
+  title_bn,
+  title_en,
+  description_bn,
+  description_en,
+  media_url,
+  media_type,
+  alt_text_bn,
+  alt_text_en,
+  link_url,
+  button_label_bn,
+  button_label_en,
+  seo_title_bn,
+  seo_title_en,
+  seo_description_bn,
+  seo_description_en,
+  priority,
+  is_active
+)
+values (
+  'home_popup',
+  'আজকের টাটকা বাজার',
+  'Today''s Fresh Market',
+  'নতুন অফার পণ্য দেখতে নিচের অফার সেকশন ঘুরে দেখুন।',
+  'Explore today''s offer products in the offer section.',
+  'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=1000&q=80',
+  'image',
+  'তাজা সবজি ও ফলের বাজারের ছবি',
+  'Fresh vegetables and fruits market image',
+  '#offers',
+  'অফার দেখুন',
+  'View Offers',
+  'আড়ৎ অফার',
+  'Aarot Offers',
+  'আড়ৎ থেকে আজকের টাটকা পণ্যের অফার।',
+  'Fresh product offers from Aarot.',
+  1,
+  false
+);
+
+insert into public.content_pages (
+  slug,
+  title_bn,
+  title_en,
+  body_bn,
+  body_en,
+  seo_title_bn,
+  seo_title_en,
+  seo_description_bn,
+  seo_description_en,
+  is_published
+)
+values
+  (
+    'about',
+    'আমাদের সম্পর্কে',
+    'About Us',
+    'আড়ৎ হলো ঘরে বসে টাটকা সবজি, ফল ও প্রয়োজনীয় বাজার অর্ডার করার সহজ প্ল্যাটফর্ম। আমাদের লক্ষ্য হলো স্থানীয় গ্রাহকদের কাছে আড়ৎ থেকে সতেজ পণ্য সঠিক ওজনে, স্বচ্ছ দামে এবং যত্নসহকারে পৌঁছে দেওয়া।
+
+আমাদের ভিশন হলো দৈনন্দিন বাজারকে আরও সহজ, বিশ্বাসযোগ্য ও ডিজিটাল করা। আমাদের মিশন হলো প্রতিদিন মানসম্পন্ন পণ্য সংগ্রহ, সঠিক পরিমাপ, পরিষ্কার প্যাকিং এবং সময়মতো ডেলিভারির মাধ্যমে গ্রাহকের ভরসা অর্জন করা।',
+    'Aarot is a simple platform for ordering fresh vegetables, fruits, and daily groceries from home. Our goal is to deliver fresh market products to local customers with accurate weight, transparent pricing, and careful handling.
+
+Our vision is to make everyday grocery shopping easier, more trustworthy, and more digital. Our mission is to earn customer trust through quality sourcing, accurate measurement, clean packing, and timely delivery.',
+    'আড়ৎ সম্পর্কে',
+    'About Aarot',
+    'আড়ৎ-এর ভিশন, মিশন এবং সেবার গল্প জানুন।',
+    'Learn about Aarot''s vision, mission, and service story.',
+    true
+  ),
+  (
+    'policy',
+    'নীতিমালা',
+    'Policy',
+    'আড়ৎ-এ অর্ডার করার সময় গ্রাহকের তথ্য নিরাপদে ব্যবহার করা হয় এবং শুধুমাত্র অর্ডার, ডেলিভারি ও সাপোর্টের কাজে রাখা হয়। পণ্যের দাম, স্টক এবং ডেলিভারি সময় বাজার পরিস্থিতি অনুযায়ী পরিবর্তন হতে পারে।
+
+কোনো পণ্য স্টকে না থাকলে বা মান ঠিক না হলে আমরা গ্রাহককে জানিয়ে সমাধান করি। ডেলিভারির সময় ঠিকানা, ফোন নম্বর এবং পেমেন্ট তথ্য সঠিকভাবে দেওয়া গ্রাহকের দায়িত্ব।',
+    'At Aarot, customer information is used carefully and only for orders, delivery, and support. Product prices, stock, and delivery timing may change based on market conditions.
+
+If a product is out of stock or does not meet our quality standard, we inform the customer and resolve it. Customers are responsible for providing correct address, phone number, and payment information.',
+    'আড়ৎ নীতিমালা',
+    'Aarot Policy',
+    'আড়ৎ-এর অর্ডার, ডেলিভারি, তথ্য এবং সাপোর্ট নীতিমালা।',
+    'Aarot order, delivery, information, and support policy.',
+    true
+  )
+on conflict (slug) do update
+set
+  title_bn = excluded.title_bn,
+  title_en = excluded.title_en,
+  body_bn = excluded.body_bn,
+  body_en = excluded.body_en,
+  seo_title_bn = excluded.seo_title_bn,
+  seo_title_en = excluded.seo_title_en,
+  seo_description_bn = excluded.seo_description_bn,
+  seo_description_en = excluded.seo_description_en,
+  is_published = excluded.is_published;
+
 insert into public.products (
   id,
   category_id,
@@ -570,6 +757,11 @@ insert into public.products (
   origin_bn,
   sell_type,
   price,
+  offer_price,
+  offer_starts_at,
+  offer_ends_at,
+  offer_badge_bn,
+  offer_badge_en,
   stock_quantity,
   quantity_step,
   minimum_quantity,
@@ -588,6 +780,11 @@ values
     'বগুড়া',
     'kg',
     95,
+    null,
+    null,
+    null,
+    null,
+    null,
     42,
     0.5,
     0.5,
@@ -605,6 +802,11 @@ values
     'যশোর',
     'piece',
     55,
+    null,
+    null,
+    null,
+    null,
+    null,
     24,
     1,
     1,
@@ -622,6 +824,11 @@ values
     'রংপুর',
     'gram',
     28,
+    null,
+    null,
+    null,
+    null,
+    null,
     8000,
     250,
     250,
@@ -639,6 +846,11 @@ values
     'নরসিংদী',
     'piece',
     12,
+    null,
+    null,
+    null,
+    null,
+    null,
     50,
     1,
     2,
@@ -656,6 +868,11 @@ set
   origin_bn = excluded.origin_bn,
   sell_type = excluded.sell_type,
   price = excluded.price,
+  offer_price = excluded.offer_price,
+  offer_starts_at = excluded.offer_starts_at,
+  offer_ends_at = excluded.offer_ends_at,
+  offer_badge_bn = excluded.offer_badge_bn,
+  offer_badge_en = excluded.offer_badge_en,
   stock_quantity = excluded.stock_quantity,
   quantity_step = excluded.quantity_step,
   minimum_quantity = excluded.minimum_quantity,

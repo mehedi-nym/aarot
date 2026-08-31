@@ -4,7 +4,7 @@ import { formatBanglaNumber } from '../../lib/utils';
 
 const navItems = [
   { to: '/', label: 'আজকের বাজার' },
-  { to: '/track', label: 'অর্ডার ট্র্যাক' }
+  { to: '/track', label: 'অর্ডার ট্র্যাক' },
 ];
 
 function AppShell({ children }) {
@@ -71,6 +71,59 @@ function AppShell({ children }) {
       >
         {children}
       </main>
+
+      {location.pathname !== '/admin' && (
+        <footer className="border-t border-brand-100/70 bg-white/70 pb-24 backdrop-blur md:pb-0">
+          <div className="mx-auto grid max-w-7xl gap-6 px-4 py-8 sm:px-6 md:grid-cols-[1.2fr,0.8fr] lg:px-8">
+            <div>
+              <Link to="/" className="inline-flex items-center gap-3">
+                <img
+                  src="https://bmqsgrrrravkziwbmyll.supabase.co/storage/v1/object/public/asset/logo_aarot.png"
+                  alt="Live আড়ৎ"
+                  className="h-12 w-12 object-contain"
+                />
+                <div>
+                  <p className="text-lg font-black text-ink">আড়ৎ</p>
+                  <p className="text-xs font-bold text-brand-700">
+                    টাটকা বাজার, সরাসরি আপনার দরজায়
+                  </p>
+                </div>
+              </Link>
+              <p className="mt-4 max-w-xl text-sm font-semibold leading-7 text-slate-600">
+                স্থানীয় গ্রাহকের জন্য সহজ, স্বচ্ছ এবং নির্ভরযোগ্য সবজি ও গ্রোসারি অর্ডার প্ল্যাটফর্ম।
+              </p>
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-2 md:text-right">
+              <div>
+                <p className="text-xs font-black uppercase tracking-widest text-brand-600">
+                  তথ্য
+                </p>
+                <div className="mt-3 flex flex-col gap-2 text-sm font-bold text-slate-600 md:items-end">
+                  <Link to="/about" className="transition hover:text-brand-700">
+                    আমাদের সম্পর্কে
+                  </Link>
+                  <Link to="/policy" className="transition hover:text-brand-700">
+                    নীতিমালা
+                  </Link>
+                  <Link to="/track" className="transition hover:text-brand-700">
+                    অর্ডার ট্র্যাক
+                  </Link>
+                </div>
+              </div>
+
+              <div>
+                <p className="text-xs font-black uppercase tracking-widest text-brand-600">
+                  কপিরাইট
+                </p>
+                <p className="mt-3 text-sm font-bold leading-7 text-slate-600">
+                  © {new Date().getFullYear()} আড়ৎ। সর্বস্বত্ব সংরক্ষিত।
+                </p>
+              </div>
+            </div>
+          </div>
+        </footer>
+      )}
     </div>
   );
 }

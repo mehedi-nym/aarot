@@ -1,6 +1,7 @@
 import { Navigate, Route, Routes } from 'react-router-dom';
 import AppShell from './components/layout/AppShell';
 import CheckoutPage from './pages/CheckoutPage';
+import ContentPage from './pages/ContentPage';
 import HomePage from './pages/HomePage';
 import TrackOrderPage from './pages/TrackOrderPage';
 import OrderDetailsPage from './pages/OrderDetailsPage';
@@ -11,6 +12,8 @@ function App() {
       <Routes>
   <Route path="/" element={<HomePage />} />
   <Route path="/checkout" element={<CheckoutPage />} />
+  <Route path="/about" element={<ContentPage />} />
+  <Route path="/policy" element={<ContentPage />} />
   
   {/* Specific dynamic route first */}
   <Route path="/track/:orderCode" element={<OrderDetailsPage />} />

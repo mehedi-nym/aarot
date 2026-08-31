@@ -5,7 +5,9 @@ import { motion, AnimatePresence } from 'framer-motion';
 import CategoryTabs from '../components/CategoryTabs';
 import DeliveryBanner from '../components/DeliveryBanner';
 import ProductCard from '../components/ProductCard';
+import OfferSection from '../components/OfferSection';
 import MixPackBuilder from '../components/MixPackBuilder';
+import PromotionalPopup from '../components/PromotionalPopup';
 import StickyCartBar from '../components/StickyCartBar';
 import FloatingBag from '../components/FloatingBag.jsx';
 import CartDrawer from '../components/CartDrawer.jsx';
@@ -15,7 +17,16 @@ import { useProducts } from '../hooks/useProducts';
 function HomePage() {
   const [activeCategory, setActiveCategory] = useState('all');
   const [productSearch, setProductSearch] = useState('');
-  const { categories, deliveryAreas, todaysProducts, allTodaysProducts, settings, loading } =
+  const {
+    categories,
+    deliveryAreas,
+    todaysProducts,
+    allTodaysProducts,
+    offerProducts,
+    promotionalBanners,
+    settings,
+    loading,
+  } =
     useProducts(activeCategory, { searchQuery: productSearch });
   const activeCategoryName =
     activeCategory === 'all'
@@ -137,6 +148,8 @@ const animateFly = (start, end, image) => {
 
         {/* DELIVERY */}
         <DeliveryBanner settings={settings} deliveryAreas={deliveryAreas} />
+
+        <PromotionalPopup banners={promotionalBanners} />
 
         {/* STATUS BAR */}
         <section className="flex flex-col md:flex-row justify-between items-center bg-slate-900 text-white rounded-[2rem] p-4">
@@ -328,6 +341,8 @@ const animateFly = (start, end, image) => {
             </div>
           )}
         </section>
+
+        <OfferSection products={offerProducts} onFly={handleFly} />
 
         <MixPackBuilder
           products={allTodaysProducts}
