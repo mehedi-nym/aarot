@@ -4,7 +4,6 @@ import {
   formatBanglaCurrency,
   formatBanglaNumber,
   getProductPrice,
-  getSellTypeMeta,
 } from '../lib/utils';
 
 const MIN_ITEM_GRAMS = 200;
@@ -46,10 +45,9 @@ const getMixUnitMeta = (product) => {
   }
 
   if (sellType === 'gram') {
-    const baseGrams = Number(product.minimum_quantity || getSellTypeMeta('gram').min);
     return {
       mode: 'gram',
-      unitPrice: baseGrams > 0 ? (price / baseGrams) * 1000 : price,
+      unitPrice: price,
       unitLabel: 'গ্রাম',
       min: MIN_ITEM_GRAMS,
       step: 100,

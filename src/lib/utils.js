@@ -58,6 +58,34 @@ export const getProductPrice = (product) => {
   return offerPrice > 0 && offerPrice < price ? offerPrice : price;
 };
 
+export const getLinePrice = (product, quantity = product?.quantity || 0) => {
+  const unitPrice = getProductPrice(product);
+  const numericQuantity = Number(quantity || 0);
+
+  if (product?.sell_type === 'gram') {
+    return (unitPrice * numericQuantity) / 1000;
+  }
+
+  return unitPrice * numericQuantity;
+};
+
+export const getRegularLinePrice = (product, quantity = product?.quantity || 0) => {
+  const regularPrice = Number(product?.regular_price || product?.price || 0);
+  const numericQuantity = Number(quantity || 0);
+
+  if (product?.sell_type === 'gram') {
+    return (regularPrice * numericQuantity) / 1000;
+  }
+
+  return regularPrice * numericQuantity;
+};
+
+export const getDiscountAmount = (product) => {
+  if (!hasActiveOffer(product)) return 0;
+
+  return Math.max(0, Number(product?.price || 0) - getProductPrice(product));
+};
+
 export const getAreaDistanceKm = (area) =>
   Number(area?.distance_km ?? area?.distanceKm ?? 0);
 

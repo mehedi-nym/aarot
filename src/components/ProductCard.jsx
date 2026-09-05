@@ -4,7 +4,9 @@ import { useCart } from '../hooks/useCart.jsx';
 import {
   formatBanglaCurrency,
   formatBanglaNumber,
+  getLinePrice,
   getProductPrice,
+  getRegularLinePrice,
   getSellTypeMeta,
   hasActiveOffer,
 } from '../lib/utils';
@@ -14,10 +16,15 @@ import { createPortal } from 'react-dom';
 function ProductCard({ product, onFly }) {
   const { addItem } = useCart();
   const meta = getSellTypeMeta(product.sell_type);
-  const [quantity, setQuantity] = useState(Number(product.minimum_quantity || meta.min));
+  
+  const minQuantity = Number(product.minimum_quantity || meta.min);
+  const [quantity, setQuantity] = useState(minQuantity);
+  
   const hasOffer = hasActiveOffer(product);
   const displayPrice = getProductPrice(product);
   const regularPrice = Number(product.price || 0);
+  const selectedLinePrice = getLinePrice(product, quantity);
+  const regularLinePrice = getRegularLinePrice(product, quantity);
 
   // Calculate discount percentage if offer is available
   const discountPercentage = hasOffer && regularPrice > displayPrice
@@ -29,6 +36,7 @@ function ProductCard({ product, onFly }) {
   const isUnavailableToday = product.available_today === false;
   const isInactive = product.is_available === false;
   const canOrder = !isInactive && !isUnavailableToday && !isOutOfStock;
+  
   const stockText = isOutOfStock
     ? 'স্টক শেষ'
     : isUnavailableToday
@@ -36,6 +44,7 @@ function ProductCard({ product, onFly }) {
       : isInactive
         ? 'সাময়িক বন্ধ'
         : 'অর্ডার নেওয়া হচ্ছে';
+        
   const buttonText = isOutOfStock
     ? 'স্টক শেষ'
     : isUnavailableToday
@@ -43,6 +52,7 @@ function ProductCard({ product, onFly }) {
       : isInactive
         ? 'সাময়িকভাবে বন্ধ'
         : 'ব্যাগে রাখুন';
+        
   const helperText = isOutOfStock
     ? 'এই পণ্যটি আপাতত স্টকে নেই।'
     : isUnavailableToday
@@ -56,7 +66,7 @@ function ProductCard({ product, onFly }) {
 
     const rect = e.currentTarget.getBoundingClientRect();
 
-    onFly({
+    onFly?.({
       x: rect.left + rect.width / 2,
       y: rect.top + rect.height / 2,
       image: product.image_url
@@ -117,7 +127,7 @@ function ProductCard({ product, onFly }) {
       </div>
 
       {/* 2. Content Section */}
-      <div className="p-5 flex flex-col flex-grow">
+      <div className="flex flex-grow flex-col p-3 sm:p-5">
         <div className="mb-4">
           <h3 className="text-lg font-black text-slate-800 leading-tight group-hover:text-emerald-700 transition-colors">
             {product.name_bn}
@@ -126,17 +136,17 @@ function ProductCard({ product, onFly }) {
           {/* E-Commerce Standard Price Section */}
           <div className="mt-2.5 flex items-baseline flex-wrap gap-x-2 gap-y-1">
             <span className="text-2xl font-black tracking-tight text-emerald-700">
-              {formatBanglaCurrency(displayPrice)}
+              {formatBanglaCurrency(selectedLinePrice)}
             </span>
 
             {hasOffer && (
               <span className="text-lg font-semibold text-slate-600 line-through">
-                {formatBanglaCurrency(regularPrice)}
+                {formatBanglaCurrency(regularLinePrice)}
               </span>
             )}
 
             <span className="text-xs font-bold text-slate-400">
-              / {meta.label}
+              / {formatBanglaNumber(quantity)} {meta.shortLabel}
             </span>
           </div>
 
@@ -159,9 +169,10 @@ function ProductCard({ product, onFly }) {
             <QuantityControl
               sellType={product.sell_type}
               value={quantity}
-              min={product.minimum_quantity}
+              min={minQuantity}
               step={product.quantity_step}
               onChange={setQuantity}
+              disabled={!canOrder}
             />
           </div>
           

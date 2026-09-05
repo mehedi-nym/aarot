@@ -23,7 +23,7 @@ function AppShell({ children }) {
           >
             <img
               src="https://bmqsgrrrravkziwbmyll.supabase.co/storage/v1/object/public/asset/logo_aarot.png"
-              alt="Live আড়ৎ"
+              alt="Live আড়ৎ"
               className="h-14 w-14 object-contain sm:h-16 sm:w-16"
             />
           </Link>
@@ -66,60 +66,57 @@ function AppShell({ children }) {
         className={
           location.pathname === '/admin'
             ? 'pb-10'
-            : 'pb-28 md:pb-10'
+            : 'pb-10'
         }
       >
         {children}
       </main>
 
       {location.pathname !== '/admin' && (
-        <footer className="border-t border-brand-100/70 bg-white/70 pb-24 backdrop-blur md:pb-0">
-          <div className="mx-auto grid max-w-7xl gap-6 px-4 py-8 sm:px-6 md:grid-cols-[1.2fr,0.8fr] lg:px-8">
-            <div>
-              <Link to="/" className="inline-flex items-center gap-3">
-                <img
-                  src="https://bmqsgrrrravkziwbmyll.supabase.co/storage/v1/object/public/asset/logo_aarot.png"
-                  alt="Live আড়ৎ"
-                  className="h-12 w-12 object-contain"
-                />
-                <div>
-                  <p className="text-lg font-black text-ink">আড়ৎ</p>
-                  <p className="text-xs font-bold text-brand-700">
-                    টাটকা বাজার, সরাসরি আপনার দরজায়
-                  </p>
-                </div>
-              </Link>
-              <p className="mt-4 max-w-xl text-sm font-semibold leading-7 text-slate-600">
-                স্থানীয় গ্রাহকের জন্য সহজ, স্বচ্ছ এবং নির্ভরযোগ্য সবজি ও গ্রোসারি অর্ডার প্ল্যাটফর্ম।
-              </p>
+        <footer className="border-t border-brand-100/70 bg-white/80 backdrop-blur">
+          <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+            <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
+              
+              {/* Brand Section */}
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+                <Link to="/" className="inline-flex shrink-0 items-center gap-3">
+                  <img
+                    src="https://bmqsgrrrravkziwbmyll.supabase.co/storage/v1/object/public/asset/logo_aarot.png"
+                    alt="Live আড়ৎ"
+                    className="h-10 w-10 object-contain sm:h-12 sm:w-12"
+                  />
+                  <div>
+                    <p className="text-base font-black text-ink sm:text-lg">আড়ৎ</p>
+                    <p className="text-xs font-bold text-brand-700">
+                      টাটকা বাজার, সরাসরি আপনার দরজায়
+                    </p>
+                  </div>
+                </Link>
+                <p className="text-xs font-medium text-slate-500 sm:border-l sm:border-slate-200 sm:pl-4">
+                  সহজ, স্বচ্ছ এবং নির্ভরযোগ্য অনলাইন বাজার প্ল্যাটফর্ম।
+                </p>
+              </div>
+
+              {/* Navigation Links */}
+              <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-xs font-bold text-slate-600 sm:text-sm">
+                <Link to="/about" className="transition hover:text-brand-700">
+                  আমাদের সম্পর্কে
+                </Link>
+                <Link to="/policy" className="transition hover:text-brand-700">
+                  নীতিমালা
+                </Link>
+                <Link to="/track" className="transition hover:text-brand-700">
+                  অর্ডার ট্র্যাক
+                </Link>
+              </div>
+
             </div>
 
-            <div className="grid gap-4 sm:grid-cols-2 md:text-right">
-              <div>
-                <p className="text-xs font-black uppercase tracking-widest text-brand-600">
-                  তথ্য
-                </p>
-                <div className="mt-3 flex flex-col gap-2 text-sm font-bold text-slate-600 md:items-end">
-                  <Link to="/about" className="transition hover:text-brand-700">
-                    আমাদের সম্পর্কে
-                  </Link>
-                  <Link to="/policy" className="transition hover:text-brand-700">
-                    নীতিমালা
-                  </Link>
-                  <Link to="/track" className="transition hover:text-brand-700">
-                    অর্ডার ট্র্যাক
-                  </Link>
-                </div>
-              </div>
-
-              <div>
-                <p className="text-xs font-black uppercase tracking-widest text-brand-600">
-                  কপিরাইট
-                </p>
-                <p className="mt-3 text-sm font-bold leading-7 text-slate-600">
-                  © {new Date().getFullYear()} আড়ৎ। সর্বস্বত্ব সংরক্ষিত।
-                </p>
-              </div>
+            {/* Bottom Copyright Bar */}
+            <div className="mt-6 border-t border-slate-100 pt-4 text-center sm:text-left">
+              <p className="text-xs font-semibold text-slate-500">
+                © {new Date().getFullYear()} আড়ৎ। সর্বস্বত্ব সংরক্ষিত।
+              </p>
             </div>
           </div>
         </footer>

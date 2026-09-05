@@ -12,6 +12,7 @@ import {
   formatBanglaCurrency,
   getAreaMeta,
   getAreaName,
+  getLinePrice,
   getOrderDeliveryInfo,
   getProductPrice,
   isAreaEligible,
@@ -26,12 +27,57 @@ const INITIAL_FORM = {
   transactionId: '',
 };
 
+function CouponTicket({ coupon, onApply }) {
+  const isFreeDelivery = coupon.discount_type === 'free_delivery';
+
+  return (
+    <button
+      type="button"
+      onClick={onApply}
+      className="flex w-64 shrink-0 overflow-hidden rounded-2xl border border-amber-200 bg-white text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+    >
+      <div
+        className={`flex w-20 shrink-0 flex-col items-center justify-center gap-1 px-2 py-4 text-center text-white ${
+          isFreeDelivery
+            ? 'bg-gradient-to-b from-brand-600 to-brand-700'
+            : 'bg-gradient-to-b from-amber-500 to-amber-600'
+        }`}
+      >
+        {isFreeDelivery ? (
+          <>
+            <span className="text-2xl leading-none">🚚</span>
+            <span className="text-[9px] font-black uppercase tracking-wide">ফ্রি ডেলিভারি</span>
+          </>
+        ) : (
+          <>
+            <span className="text-lg font-black leading-none">
+              {coupon.discount_type === 'percent' ? `${coupon.value}%` : `৳${coupon.value}`}
+            </span>
+            <span className="text-[9px] font-black uppercase tracking-wide">ছাড়</span>
+          </>
+        )}
+      </div>
+
+      <div className="flex flex-1 flex-col justify-center gap-1 border-l-2 border-dashed border-amber-200 px-3 py-3">
+        <p className="text-xs font-black uppercase tracking-wide text-slate-900">{coupon.code}</p>
+        <p className="text-[10px] font-semibold text-slate-400">
+          {coupon.min_order_amount
+            ? `ন্যূনতম ${formatBanglaCurrency(coupon.min_order_amount)}`
+            : 'কোনো শর্ত নেই'}
+        </p>
+        <span className="mt-1 inline-block w-fit rounded-full bg-slate-900 px-2.5 py-1 text-[10px] font-bold text-white">
+          প্রয়োগ করুন
+        </span>
+      </div>
+    </button>
+  );
+}
+
 function CheckoutPage() {
   const { items, subtotal, clearCart } = useCart();
   const { deliveryAreas, settings } = useProducts();
   const { submitOrder, submitting, error: orderError } = useOrders();
 
-  // ✅ Load cached form (without transactionId)
   const [form, setForm] = useState(() => {
     const saved = localStorage.getItem('checkout_form');
     if (saved) {
@@ -45,18 +91,14 @@ function CheckoutPage() {
     return INITIAL_FORM;
   });
 
+  const [fieldErrors, setFieldErrors] = useState({});
   const [successOrder, setSuccessOrder] = useState(null);
-
-  // Coupon state
   const [couponCode, setCouponCode] = useState('');
   const [appliedCoupon, setAppliedCoupon] = useState(null);
   const [couponError, setCouponError] = useState('');
-  
-  // Featured Coupons State
   const [featuredCoupons, setFeaturedCoupons] = useState([]);
   const [loadingCoupons, setLoadingCoupons] = useState(false);
 
-  // ✅ Auto-save form (excluding transactionId)
   useEffect(() => {
     const { transactionId, ...rest } = form;
     localStorage.setItem('checkout_form', JSON.stringify(rest));
@@ -74,7 +116,6 @@ function CheckoutPage() {
     }
   }, [deliveryAreas, form.area]);
 
-  // ✅ Fetch Featured Coupons on mount
   useEffect(() => {
     const fetchFeaturedCoupons = async () => {
       setLoadingCoupons(true);
@@ -87,7 +128,6 @@ function CheckoutPage() {
 
         if (error) throw error;
 
-        // Filter out expired coupons on client side
         const now = new Date();
         const validCoupons = (data || []).filter((coupon) => {
           if (!coupon.expiry_date && !coupon.expires_at) return true;
@@ -106,7 +146,6 @@ function CheckoutPage() {
     fetchFeaturedCoupons();
   }, []);
 
-  // ✅ Handle change
   const handleChange = (field, value) => {
     setForm((prev) => {
       if (field === 'paymentMethod' && value !== 'bkash') {
@@ -122,9 +161,15 @@ function CheckoutPage() {
         [field]: value,
       };
     });
+
+    setFieldErrors((prev) => {
+      if (!prev[field]) return prev;
+      const next = { ...prev };
+      delete next[field];
+      return next;
+    });
   };
 
-  // --- Calculations ---
   const numericSubtotal = Number(subtotal) || 0;
 
   const freeDeliveryThreshold = useMemo(() => {
@@ -132,29 +177,34 @@ function CheckoutPage() {
     return isNaN(val) || val <= 0 ? 1000 : val;
   }, [settings]);
 
-  const isFreeDelivery = numericSubtotal >= freeDeliveryThreshold;
+  const isFreeDeliveryByThreshold = numericSubtotal >= freeDeliveryThreshold;
+  const isFreeDeliveryByCoupon = appliedCoupon?.discount_type === 'free_delivery';
 
-  const deliveryCharge = useMemo(() => {
-    if (isFreeDelivery) return 0;
+  const baseDeliveryCharge = useMemo(() => {
+    if (isFreeDeliveryByThreshold) return 0;
     return calculateDeliveryCharge(settings, form.area, deliveryAreas);
-  }, [deliveryAreas, settings, form.area, isFreeDelivery]);
+  }, [deliveryAreas, settings, form.area, isFreeDeliveryByThreshold]);
 
+  // The charge actually billed, after a free-delivery coupon is applied
+  const effectiveDeliveryCharge = isFreeDeliveryByCoupon ? 0 : baseDeliveryCharge;
+
+  // Subtotal-based discount only applies for percent/fixed coupons —
+  // a free-delivery coupon's "discount" is the waived delivery charge, not a subtotal cut
   const discountAmount = useMemo(() => {
-    if (!appliedCoupon) return 0;
+    if (!appliedCoupon || isFreeDeliveryByCoupon) return 0;
 
     if (appliedCoupon.discount_type === 'percent') {
       return (numericSubtotal * appliedCoupon.value) / 100;
     }
 
     return appliedCoupon.value;
-  }, [appliedCoupon, numericSubtotal]);
+  }, [appliedCoupon, numericSubtotal, isFreeDeliveryByCoupon]);
 
   const safeDiscount = Math.min(discountAmount, numericSubtotal);
-  const totalAmount = numericSubtotal + deliveryCharge - safeDiscount;
+  const totalAmount = numericSubtotal + effectiveDeliveryCharge - safeDiscount;
 
   const eligible = isAreaEligible(settings, form.area, deliveryAreas);
 
-  // --- Coupon Logic ---
   const handleApplyCoupon = async (codeToApply) => {
     setCouponError('');
     const code = (typeof codeToApply === 'string' ? codeToApply : couponCode).trim().toUpperCase();
@@ -190,16 +240,35 @@ function CheckoutPage() {
     }
   };
 
-  // --- Submit ---
+  const handleRemoveCoupon = () => {
+    setAppliedCoupon(null);
+    setCouponCode('');
+    setCouponError('');
+  };
+
+  const validate = () => {
+    const next = {};
+    if (!form.name.trim()) next.name = 'নাম আবশ্যক';
+    if (!/^01[0-9]{9}$/.test(form.phone.trim())) {
+      next.phone = 'সঠিক নাম্বার দিন, যেমন: 01XXXXXXXXX';
+    }
+    if (!form.address.trim()) next.address = 'সম্পূর্ণ ঠিকানা লিখুন';
+    if (!form.area) next.area = 'এরিয়া নির্বাচন করুন';
+    if (form.paymentMethod === 'bkash' && !form.transactionId.trim()) {
+      next.transactionId = 'বিকাশ ট্রানজেকশন আইডি আবশ্যক';
+    }
+    return next;
+  };
+
   const handleSubmit = async (event) => {
     event.preventDefault();
 
-    // ✅ Validation
-    if (!form.name || !form.phone || !form.address || !form.area) {
-      return;
-    }
+    const validationErrors = validate();
+    setFieldErrors(validationErrors);
 
-    if (form.paymentMethod === 'bkash' && !form.transactionId) {
+    if (Object.keys(validationErrors).length > 0) {
+      const firstErrorField = document.querySelector('[data-field-error="true"]');
+      firstErrorField?.scrollIntoView({ behavior: 'smooth', block: 'center' });
       return;
     }
 
@@ -219,7 +288,7 @@ function CheckoutPage() {
       subtotal: numericSubtotal,
       discount_amount: safeDiscount,
       coupon_used: appliedCoupon?.code || null,
-      delivery_charge: deliveryCharge,
+      delivery_charge: effectiveDeliveryCharge,
       total_amount: totalAmount,
       delivery_date: deliveryInfo.deliveryDate.toISOString(),
       delivery_type: deliveryInfo.deliveryType,
@@ -228,6 +297,7 @@ function CheckoutPage() {
       status_message_bn: 'আপনার অর্ডার গ্রহণ করা হয়েছে।',
       items: items.map((item) => {
         const itemPrice = getProductPrice(item);
+        const linePrice = getLinePrice(item);
 
         return {
           product_id: item.is_custom_mix ? null : item.id,
@@ -239,7 +309,7 @@ function CheckoutPage() {
           sell_type: item.sell_type,
           unit_price: itemPrice,
           quantity: item.quantity,
-          line_total: Number(itemPrice) * Number(item.quantity),
+          line_total: linePrice,
         };
       }),
     };
@@ -250,7 +320,6 @@ function CheckoutPage() {
       setSuccessOrder(createdOrder);
       clearCart();
 
-      // ✅ keep user info, only clear transaction ID
       setForm((prev) => ({
         ...prev,
         transactionId: '',
@@ -258,7 +327,6 @@ function CheckoutPage() {
     }
   };
 
-  // --- Empty Cart ---
   if (!items.length && !successOrder) {
     return (
       <div className="mx-auto max-w-4xl px-4 py-16 text-center sm:py-20">
@@ -278,12 +346,18 @@ function CheckoutPage() {
     );
   }
 
-  // --- Success ---
   if (successOrder) {
     return (
       <div className="mx-auto max-w-3xl px-4 py-12 text-center sm:py-16">
         <div className="section-shell p-6 shadow-soft sm:p-10">
-          <div className="mb-6 text-5xl">🎉</div>
+          {/* First element */}
+<div className="mb-6 flex justify-center">
+  <img 
+    src="https://bmqsgrrrravkziwbmyll.supabase.co/storage/v1/object/public/asset/stars.png" 
+    alt="Success" 
+    className="h-16 w-16 object-contain" 
+  />
+</div>
           <h2 className="text-3xl font-black text-slate-900">
             অর্ডার সফল হয়েছে!
           </h2>
@@ -298,7 +372,7 @@ function CheckoutPage() {
               to="/track"
               className="rounded-2xl bg-brand-600 px-8 py-4 font-bold text-white transition hover:bg-brand-700"
             >
-              ট্র্যাক করুন
+              ট্যাক করুন
             </Link>
             <Link
               to="/"
@@ -312,10 +386,9 @@ function CheckoutPage() {
     );
   }
 
-  // --- Main UI ---
   return (
-    <div className="mx-auto w-full max-w-7xl px-3 py-5 sm:px-6 sm:py-8 lg:px-8">
-      <div className="mb-5 flex flex-col gap-3 sm:mb-8 sm:flex-row sm:items-end sm:justify-between">
+    <div className="mx-auto w-full max-w-7xl px-3 py-5 pb-28 sm:px-6 sm:py-8 lg:px-8 lg:pb-8">
+      <div className="mb-5 flex flex-col gap-3 sm:mb-6 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p className="text-xs font-black uppercase tracking-widest text-brand-600">
             Checkout
@@ -332,129 +405,122 @@ function CheckoutPage() {
         </Link>
       </div>
 
-      <div className="grid gap-5 lg:grid-cols-[minmax(0,1.05fr),minmax(340px,0.95fr)] lg:items-start lg:gap-8">
-        {/* Left */}
-        <CheckoutForm
-          form={form}
-          onChange={handleChange}
-          onSubmit={handleSubmit}
-          submitting={submitting}
-          settings={settings}
-          isEligible={eligible}
-          error={orderError}
-          deliveryAreas={deliveryAreas}
-        />
-
-        {/* Right */}
-        <div className="space-y-5 lg:space-y-6">
-          {/* Coupon */}
-<div className="section-shell p-4 sm:p-5 md:p-6 space-y-4">
-  <h2 className="text-2xl font-extrabold text-ink tracking-tight">
-                 ডিসকাউন্ট কুপন
-           </h2>
-           
-           <p className="mt-2 text-sm leading-7 text-brand-700">
-  বিশেষ অফার (কুপনে ক্লিক করে ব্যবহার করুন):
-  </p>
-
-  {/* Featured Coupons Pill Cards */}
-  {featuredCoupons.length > 0 && (
-    <div className="flex flex-wrap gap-3">
-      {featuredCoupons.map((coupon) => {
-        const isSelected = appliedCoupon?.code === coupon.code;
-        return (
-          <button
-            key={coupon.id}
-            type="button"
-            onClick={() => handleApplyCoupon(coupon.code)}
-            className={`group flex items-center gap-3 rounded-2xl p-3 text-left transition-all ${
-              isSelected
-                ? 'bg-emerald-50 ring-2 ring-emerald-500'
-                : 'bg-slate-100/70 hover:bg-slate-200/70'
-            }`}
-          >
-            {/* Tag Icon Bubble */}
-            <div
-              className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl transition ${
-                isSelected
-                  ? 'bg-emerald-100 text-emerald-600'
-                  : 'bg-white text-rose-500 shadow-sm'
-              }`}
+      {/* Offers banner — first thing on the page, not buried at the bottom */}
+      <div className="section-shell mb-5 p-4 sm:mb-8 sm:p-5 md:p-6">
+        <div className="mb-3 flex items-center justify-between">
+          <h2 className="flex items-center gap-2 text-base font-black text-ink sm:text-lg">
+  <img 
+    src="https://bmqsgrrrravkziwbmyll.supabase.co/storage/v1/object/public/asset/promo%20(1).png" 
+    alt="Promo Icon" 
+    className="h-6 w-6 object-contain"
+  />
+  আপনার জন্য অফার
+</h2>
+          {appliedCoupon && (
+            <button
+              type="button"
+              onClick={handleRemoveCoupon}
+              className="text-xs font-bold text-slate-400 underline underline-offset-2"
             >
-              <svg
-                className="h-4 w-4"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth={2}
+              কুপন সরান
+            </button>
+          )}
+        </div>
+
+        {appliedCoupon ? (
+          <div className="flex items-center gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3">
+            <img 
+  src="https://bmqsgrrrravkziwbmyll.supabase.co/storage/v1/object/public/asset/checked.png" 
+  alt="Checked" 
+  className="h-6 w-6 shrink-0 object-contain" 
+/>
+            <div>
+              <p className="text-sm font-black text-emerald-700">
+                {appliedCoupon.code} প্রয়োগ করা হয়েছে
+              </p>
+              <p className="flex items-center gap-1 text-xs font-bold text-emerald-600">
+  {isFreeDeliveryByCoupon ? (
+    <>
+      <span>ডেলিভারি চার্জ ফ্রি হয়ে গেছে</span>
+      <img
+        src="https://bmqsgrrrravkziwbmyll.supabase.co/storage/v1/object/public/asset/fast-delivery.png"
+        alt="Delivery"
+        className="h-4 w-4 shrink-0 object-contain"
+      />
+    </>
+  ) : (
+    `${formatBanglaCurrency(safeDiscount)} বাঁচলো`
+  )}
+</p>
+            </div>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {featuredCoupons.length > 0 && (
+              <div className="-mx-1 flex gap-3 overflow-x-auto px-1 pb-1">
+                {featuredCoupons.map((coupon) => (
+                  <CouponTicket
+                    key={coupon.id}
+                    coupon={coupon}
+                    onApply={() => handleApplyCoupon(coupon.code)}
+                  />
+                ))}
+              </div>
+            )}
+
+            <div className="grid gap-3 sm:grid-cols-[1fr,auto]">
+              <input
+                type="text"
+                value={couponCode}
+                onChange={(e) => setCouponCode(e.target.value)}
+                placeholder="কুপন কোড লিখুন"
+                className="field-base font-bold uppercase"
+              />
+              <button
+                type="button"
+                onClick={() => handleApplyCoupon()}
+                className="h-12 min-h-12 rounded-xl bg-ink px-6 text-sm font-semibold text-white transition hover:opacity-90"
               >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"
-                />
-              </svg>
+                প্রয়োগ করুন
+              </button>
             </div>
 
-            {/* Code & Discount Info Stack */}
-            <div className="pr-2 leading-tight">
-              <p className="text-xs font-black uppercase tracking-wide text-slate-900">
-                {coupon.code}
-              </p>
-              <p className="text-[11px] font-bold text-slate-400">
-                {coupon.discount_type === 'percent'
-                  ? `${coupon.value}% OFF`
-                  : `${formatBanglaCurrency(coupon.value)} OFF`}
-              </p>
-            </div>
-          </button>
-        );
-      })}
-    </div>
-  )}
+            {couponError && (
+              <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-600">
+                {couponError}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
 
-  {/* Coupon Input Field */}
-  <div className="grid gap-3 sm:grid-cols-[1fr,auto]">
-    <input
-      type="text"
-      value={couponCode}
-      onChange={(e) => setCouponCode(e.target.value)}
-      placeholder="কুপন কোড লিখুন"
-      className="field-base font-bold uppercase"
-    />
+      <div className="flex flex-col gap-5 lg:grid lg:grid-cols-[minmax(0,1.05fr),minmax(340px,0.95fr)] lg:items-start lg:gap-8">
+        <div className="order-1 lg:order-1 lg:col-start-1">
+          <CheckoutForm
+            form={form}
+            onChange={handleChange}
+            onSubmit={handleSubmit}
+            submitting={submitting}
+            settings={settings}
+            isEligible={eligible}
+            orderError={orderError}
+            fieldErrors={fieldErrors}
+            deliveryAreas={deliveryAreas}
+            totalAmount={totalAmount}
+          />
+        </div>
 
-    <button
-      type="button"
-      onClick={() => handleApplyCoupon()}
-      className="h-12 min-h-12 rounded-xl bg-ink px-6 text-sm font-semibold text-white transition hover:opacity-90"
-    >
-      প্রয়োগ করুন
-    </button>
-  </div>
-
-  {/* Error Alert */}
-  {couponError && (
-    <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-600">
-      {couponError}
-    </div>
-  )}
-
-  {/* Applied Success Message */}
-  {appliedCoupon && (
-    <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-600">
-      <span>✔</span>
-      <span>{appliedCoupon.code} কুপনটি সফলভাবে যুক্ত হয়েছে!</span>
-    </div>
-  )}
-</div>
-
+        <div className="order-2 lg:order-2 lg:col-start-2">
           <OrderSummaryCard
             items={items}
             subtotal={numericSubtotal}
-            deliveryCharge={deliveryCharge}
+            deliveryCharge={effectiveDeliveryCharge}
             discount={safeDiscount}
             totalAmount={totalAmount}
             settings={settings}
+            freeDeliveryReason={
+              isFreeDeliveryByCoupon ? 'coupon' : isFreeDeliveryByThreshold ? 'threshold' : null
+            }
           />
         </div>
       </div>

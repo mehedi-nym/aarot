@@ -7,7 +7,7 @@ import {
   fetchSettings,
 } from '../lib/queries';
 import { hasSupabaseEnv, supabase } from '../lib/supabase';
-import { hasActiveOffer } from '../lib/utils';
+import { getDiscountAmount, hasActiveOffer } from '../lib/utils';
 
 const normalizeSearchValue = (value) =>
   String(value || '')
@@ -156,7 +156,10 @@ export function useProducts(activeCategory = 'all', options = {}) {
   );
 
   const offerProducts = useMemo(
-    () => visibleProducts.filter(hasActiveOffer),
+    () =>
+      visibleProducts
+        .filter(hasActiveOffer)
+        .sort((left, right) => getDiscountAmount(right) - getDiscountAmount(left)),
     [visibleProducts],
   );
 
