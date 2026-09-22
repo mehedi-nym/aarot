@@ -77,13 +77,32 @@ function TrackOrderPage() {
         
         {/* Search Header */}
         <div className="mb-6 sm:mb-12">
-          <h2 className="text-2xl sm:text-4xl font-black text-slate-900 tracking-tight mb-2">
-            আমার অর্ডার
-          </h2>
-          <p className="text-xs sm:text-sm text-slate-500 font-medium">
-            একবার নম্বর দিলে পরে এই পেজে এলেই নতুন অর্ডার আপডেট দেখাবে
-          </p>
-        </div>
+  <Link
+    to="/"
+    className="mb-3 inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 transition-colors hover:text-brand-600 sm:mb-4 sm:text-sm"
+  >
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 20 20"
+      fill="currentColor"
+      className="h-4 w-4"
+    >
+      <path
+        fillRule="evenodd"
+        d="M17 10a.75.75 0 01-.75.75H5.56l4.22 4.22a.75.75 0 11-1.06 1.06l-5.5-5.5a.75.75 0 010-1.06l5.5-5.5a.75.75 0 111.06 1.06L5.56 9.25H16.25A.75.75 0 0117 10z"
+        clipRule="evenodd"
+      />
+    </svg>
+    <span>বাজারে ফিরুন</span>
+  </Link>
+
+  <h2 className="mb-2 text-2xl font-black tracking-tight text-slate-900 sm:text-4xl">
+    আমার অর্ডার
+  </h2>
+  <p className="text-xs font-medium text-slate-500 sm:text-sm">
+    আপনার নিবন্ধিত ফোন নম্বর প্রদান করে অর্ডারের সর্বশেষ স্ট্যাটাস দেখুন।
+  </p>
+</div>
 
         {/* Search Input - Fully Responsive */}
         <form onSubmit={handleTrack} className="mb-8 sm:mb-12">

@@ -2,6 +2,7 @@ import { useMemo, useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import CheckoutForm from '../components/checkout/CheckoutForm';
 import OrderSummaryCard from '../components/checkout/OrderSummaryCard';
+import OrderProcessingModal from '../components/checkout/OrderProcessingModal';
 import { useCart } from '../hooks/useCart';
 import { useOrders } from '../hooks/useOrders';
 import { useProducts } from '../hooks/useProducts';
@@ -98,6 +99,7 @@ function CheckoutPage() {
   const [couponError, setCouponError] = useState('');
   const [featuredCoupons, setFeaturedCoupons] = useState([]);
   const [loadingCoupons, setLoadingCoupons] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
 
   useEffect(() => {
     const { transactionId, ...rest } = form;
@@ -185,11 +187,8 @@ function CheckoutPage() {
     return calculateDeliveryCharge(settings, form.area, deliveryAreas);
   }, [deliveryAreas, settings, form.area, isFreeDeliveryByThreshold]);
 
-  // The charge actually billed, after a free-delivery coupon is applied
   const effectiveDeliveryCharge = isFreeDeliveryByCoupon ? 0 : baseDeliveryCharge;
 
-  // Subtotal-based discount only applies for percent/fixed coupons —
-  // a free-delivery coupon's "discount" is the waived delivery charge, not a subtotal cut
   const discountAmount = useMemo(() => {
     if (!appliedCoupon || isFreeDeliveryByCoupon) return 0;
 
@@ -272,6 +271,8 @@ function CheckoutPage() {
       return;
     }
 
+    setIsProcessing(true);
+
     const deliveryInfo = getOrderDeliveryInfo(settings);
     const orderCode = buildOrderCode();
     const selectedArea = getAreaMeta(form.area, deliveryAreas);
@@ -314,16 +315,30 @@ function CheckoutPage() {
       }),
     };
 
-    const createdOrder = await submitOrder(payload);
+    const startTime = Date.now();
 
-    if (createdOrder) {
-      setSuccessOrder(createdOrder);
-      clearCart();
+    try {
+      const createdOrder = await submitOrder(payload);
 
-      setForm((prev) => ({
-        ...prev,
-        transactionId: '',
-      }));
+      if (createdOrder) {
+        const elapsedTime = Date.now() - startTime;
+        const remainingDelay = Math.max(0, 3000 - elapsedTime);
+
+        setTimeout(() => {
+          setSuccessOrder(createdOrder);
+          clearCart();
+          setForm((prev) => ({
+            ...prev,
+            transactionId: '',
+          }));
+          setIsProcessing(false);
+        }, remainingDelay);
+      } else {
+        setIsProcessing(false);
+      }
+    } catch (err) {
+      console.error('Order submission failed:', err);
+      setIsProcessing(false);
     }
   };
 
@@ -350,14 +365,13 @@ function CheckoutPage() {
     return (
       <div className="mx-auto max-w-3xl px-4 py-12 text-center sm:py-16">
         <div className="section-shell p-6 shadow-soft sm:p-10">
-          {/* First element */}
-<div className="mb-6 flex justify-center">
-  <img 
-    src="https://bmqsgrrrravkziwbmyll.supabase.co/storage/v1/object/public/asset/stars.png" 
-    alt="Success" 
-    className="h-16 w-16 object-contain" 
-  />
-</div>
+          <div className="mb-6 flex justify-center">
+            <img 
+              src="https://bmqsgrrrravkziwbmyll.supabase.co/storage/v1/object/public/asset/stars.png" 
+              alt="Success" 
+              className="h-16 w-16 object-contain" 
+            />
+          </div>
           <h2 className="text-3xl font-black text-slate-900">
             অর্ডার সফল হয়েছে!
           </h2>
@@ -372,7 +386,7 @@ function CheckoutPage() {
               to="/track"
               className="rounded-2xl bg-brand-600 px-8 py-4 font-bold text-white transition hover:bg-brand-700"
             >
-              ট্যাক করুন
+              ট্র্যাক করুন
             </Link>
             <Link
               to="/"
@@ -405,17 +419,16 @@ function CheckoutPage() {
         </Link>
       </div>
 
-      {/* Offers banner — first thing on the page, not buried at the bottom */}
       <div className="section-shell mb-5 p-4 sm:mb-8 sm:p-5 md:p-6">
         <div className="mb-3 flex items-center justify-between">
           <h2 className="flex items-center gap-2 text-base font-black text-ink sm:text-lg">
-  <img 
-    src="https://bmqsgrrrravkziwbmyll.supabase.co/storage/v1/object/public/asset/promo%20(1).png" 
-    alt="Promo Icon" 
-    className="h-6 w-6 object-contain"
-  />
-  আপনার জন্য অফার
-</h2>
+            <img 
+              src="https://bmqsgrrrravkziwbmyll.supabase.co/storage/v1/object/public/asset/promo%20(1).png" 
+              alt="Promo Icon" 
+              className="h-6 w-6 object-contain"
+            />
+            আপনার জন্য অফার
+          </h2>
           {appliedCoupon && (
             <button
               type="button"
@@ -430,28 +443,28 @@ function CheckoutPage() {
         {appliedCoupon ? (
           <div className="flex items-center gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3">
             <img 
-  src="https://bmqsgrrrravkziwbmyll.supabase.co/storage/v1/object/public/asset/checked.png" 
-  alt="Checked" 
-  className="h-6 w-6 shrink-0 object-contain" 
-/>
+              src="https://bmqsgrrrravkziwbmyll.supabase.co/storage/v1/object/public/asset/checked.png" 
+              alt="Checked" 
+              className="h-6 w-6 shrink-0 object-contain" 
+            />
             <div>
               <p className="text-sm font-black text-emerald-700">
                 {appliedCoupon.code} প্রয়োগ করা হয়েছে
               </p>
               <p className="flex items-center gap-1 text-xs font-bold text-emerald-600">
-  {isFreeDeliveryByCoupon ? (
-    <>
-      <span>ডেলিভারি চার্জ ফ্রি হয়ে গেছে</span>
-      <img
-        src="https://bmqsgrrrravkziwbmyll.supabase.co/storage/v1/object/public/asset/fast-delivery.png"
-        alt="Delivery"
-        className="h-4 w-4 shrink-0 object-contain"
-      />
-    </>
-  ) : (
-    `${formatBanglaCurrency(safeDiscount)} বাঁচলো`
-  )}
-</p>
+                {isFreeDeliveryByCoupon ? (
+                  <>
+                    <span>ডেলিভারি চার্জ ফ্রি হয়ে গেছে</span>
+                    <img
+                      src="https://bmqsgrrrravkziwbmyll.supabase.co/storage/v1/object/public/asset/fast-delivery.png"
+                      alt="Delivery"
+                      className="h-4 w-4 shrink-0 object-contain"
+                    />
+                  </>
+                ) : (
+                  `${formatBanglaCurrency(safeDiscount)} বাঁচলো`
+                )}
+              </p>
             </div>
           </div>
         ) : (
@@ -500,7 +513,7 @@ function CheckoutPage() {
             form={form}
             onChange={handleChange}
             onSubmit={handleSubmit}
-            submitting={submitting}
+            submitting={submitting || isProcessing}
             settings={settings}
             isEligible={eligible}
             orderError={orderError}
@@ -524,6 +537,8 @@ function CheckoutPage() {
           />
         </div>
       </div>
+
+      <OrderProcessingModal isOpen={isProcessing || submitting} />
     </div>
   );
 }
