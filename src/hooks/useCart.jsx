@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useMemo, useState } from 'react';
-import { getLinePrice, getSellTypeMeta, safeJsonParse } from '../lib/utils';
+import { getLinePrice, getSellTypeMeta, roundQuantity, safeJsonParse } from '../lib/utils';
 
 const CartContext = createContext(null);
 const STORAGE_KEY = 'aarot-cart';
@@ -12,7 +12,9 @@ export function CartProvider({ children }) {
     const parsed = safeJsonParse(stored, []);
 
     // ✅ Ensure it's always an array
-    return Array.isArray(parsed) ? parsed : [];
+    return Array.isArray(parsed)
+      ? parsed.map((item) => ({ ...item, quantity: roundQuantity(item.quantity) }))
+      : [];
   });
 
   // ✅ Persist to localStorage safely
@@ -35,7 +37,7 @@ export function CartProvider({ children }) {
           item.id === product.id
             ? {
                 ...item,
-                quantity: Number(item.quantity) + Number(quantity),
+                quantity: roundQuantity(Number(item.quantity) + Number(quantity)),
               }
             : item
         );
@@ -45,7 +47,7 @@ export function CartProvider({ children }) {
         ...safeItems,
         {
           ...product,
-          quantity: Number(quantity),
+          quantity: roundQuantity(quantity),
         },
       ];
     });
@@ -69,7 +71,7 @@ export function CartProvider({ children }) {
 
           return {
             ...item,
-            quantity: Math.max(Number(meta?.min || 0), Number(quantity)),
+            quantity: roundQuantity(Math.max(Number(meta?.min || 0), Number(quantity))),
           };
         })
         .filter((item) => item.quantity > 0)
@@ -82,10 +84,9 @@ export function CartProvider({ children }) {
   const subtotal = useMemo(() => {
     const safeItems = Array.isArray(items) ? items : [];
 
-    return safeItems.reduce(
-      (sum, item) =>
-        sum + getLinePrice(item),
-      0
+    return roundQuantity(
+      safeItems.reduce((sum, item) => sum + getLinePrice(item), 0),
+      2,
     );
   }, [items]);
 

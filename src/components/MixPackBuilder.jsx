@@ -4,6 +4,7 @@ import {
   formatBanglaCurrency,
   formatBanglaNumber,
   getProductPrice,
+  roundQuantity,
 } from '../lib/utils';
 
 const MIN_ITEM_GRAMS = 200;
@@ -85,7 +86,7 @@ function MixPackBuilder({ products = [], settings, onFly }) {
     () =>
       vegetableProducts
         .map((product) => {
-          const quantity = Number(selected[product.id] || 0);
+          const quantity = roundQuantity(selected[product.id] || 0);
           const unitMeta = getMixUnitMeta(product);
           if (quantity < unitMeta.min) return null;
 
@@ -143,7 +144,7 @@ function MixPackBuilder({ products = [], settings, onFly }) {
     if (!canAdd) return;
 
     const description = selectedLines
-      .map((line) => `${line.product.name_bn} ${line.quantity} ${line.unitMeta.unitLabel}`)
+      .map((line) => `${line.product.name_bn} ${formatBanglaNumber(line.quantity)} ${line.unitMeta.unitLabel}`)
       .join(', ');
 
     const mixItem = {
@@ -221,7 +222,7 @@ function MixPackBuilder({ products = [], settings, onFly }) {
           <div className="min-h-0 flex-1 overflow-y-auto pr-1 custom-scrollbar">
             <div className="grid gap-3 sm:grid-cols-2">
             {vegetableProducts.map((product) => {
-              const quantity = Number(selected[product.id] || 0);
+              const quantity = roundQuantity(selected[product.id] || 0);
               const unitMeta = getMixUnitMeta(product);
               const isSelected = quantity >= unitMeta.min;
               const unitText = unitMeta.mode === 'piece' ? 'পিস' : 'কেজি';
@@ -267,7 +268,7 @@ function MixPackBuilder({ products = [], settings, onFly }) {
                         onClick={() =>
                           updateQuantity(
                             product.id,
-                            Math.max(0, quantity - unitMeta.step),
+                            roundQuantity(Math.max(0, quantity - unitMeta.step)),
                             unitMeta.min
                           )
                         }
@@ -283,7 +284,7 @@ function MixPackBuilder({ products = [], settings, onFly }) {
                         onClick={() =>
                           updateQuantity(
                             product.id,
-                            quantity ? quantity + unitMeta.step : unitMeta.min,
+                            quantity ? roundQuantity(quantity + unitMeta.step) : unitMeta.min,
                             unitMeta.min
                           )
                         }

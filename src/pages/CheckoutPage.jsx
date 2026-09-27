@@ -23,9 +23,11 @@ const INITIAL_FORM = {
   name: '',
   phone: '',
   address: '',
+  customerNote: '',
   area: 'dhanmondi',
   paymentMethod: 'cod',
   transactionId: '',
+  website: '',
 };
 
 function CouponTicket({ coupon, onApply }) {
@@ -102,7 +104,7 @@ function CheckoutPage() {
   const [isProcessing, setIsProcessing] = useState(false);
 
   useEffect(() => {
-    const { transactionId, ...rest } = form;
+    const { transactionId, website, ...rest } = form;
     localStorage.setItem('checkout_form', JSON.stringify(rest));
   }, [form]);
 
@@ -281,6 +283,8 @@ function CheckoutPage() {
       customer_name: form.name,
       phone: form.phone,
       address_bn: form.address,
+      customer_note: form.customerNote.trim() || null,
+      website: form.website,
       area: form.area,
       area_name_bn: getAreaName(selectedArea),
       payment_method: form.paymentMethod,
@@ -311,6 +315,7 @@ function CheckoutPage() {
           unit_price: itemPrice,
           quantity: item.quantity,
           line_total: linePrice,
+          is_custom_mix: Boolean(item.is_custom_mix),
         };
       }),
     };

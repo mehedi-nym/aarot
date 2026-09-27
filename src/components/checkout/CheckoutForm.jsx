@@ -41,6 +41,16 @@ function CheckoutForm({
 
   return (
     <form className="section-shell p-4 pb-24 sm:p-5 sm:pb-24 md:p-6 lg:pb-6" onSubmit={onSubmit}>
+      <input
+        type="text"
+        name="website"
+        value={form.website || ''}
+        onChange={(e) => onChange('website', e.target.value)}
+        tabIndex="-1"
+        autoComplete="off"
+        aria-hidden="true"
+        className="absolute -left-[9999px] h-px w-px opacity-0"
+      />
       <div className="space-y-6 sm:space-y-7">
 
         {/* Header */}
@@ -106,6 +116,20 @@ function CheckoutForm({
               aria-invalid={Boolean(fieldErrors.address)}
             />
             <FieldError message={fieldErrors.address} />
+          </label>
+
+          <label className="block space-y-2">
+            <span className="text-sm font-semibold text-brand-700">
+              অর্ডার নোট <span className="font-normal text-slate-400">(ঐচ্ছিক)</span>
+            </span>
+            <textarea
+              rows="2"
+              className={`${inputClass('customerNote')} resize-none`}
+              value={form.customerNote}
+              onChange={(e) => onChange('customerNote', e.target.value)}
+              placeholder="যেমন: সবজি আলাদা করে প্যাক করবেন"
+              maxLength={500}
+            />
           </label>
 
           <label className="block space-y-2">

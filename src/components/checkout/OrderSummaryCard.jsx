@@ -145,7 +145,7 @@ function OrderSummaryCard({
                       </p>
                     )}
                     <p className="mt-1 text-xs font-bold text-slate-500">
-                      {item.quantity} {getSellTypeMeta(item.sell_type).shortLabel} x{' '}
+                      {formatBanglaNumber(item.quantity)} {getSellTypeMeta(item.sell_type).shortLabel} x{' '}
                       {formatBanglaCurrency(itemPrice)}
                     </p>
                     {itemHasOffer && (

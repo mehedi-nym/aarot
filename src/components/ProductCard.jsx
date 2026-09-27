@@ -9,6 +9,7 @@ import {
   getRegularLinePrice,
   getSellTypeMeta,
   hasActiveOffer,
+  roundQuantity,
 } from '../lib/utils';
 import QuantityControl from './QuantityControl';
 import { createPortal } from 'react-dom';
@@ -18,7 +19,7 @@ function ProductCard({ product, onFly }) {
   const meta = getSellTypeMeta(product.sell_type);
   
   const minQuantity = Number(product.minimum_quantity || meta.min);
-  const [quantity, setQuantity] = useState(minQuantity);
+  const [quantity, setQuantity] = useState(roundQuantity(minQuantity));
   
   const hasOffer = hasActiveOffer(product);
   const displayPrice = getProductPrice(product);
@@ -133,24 +134,27 @@ function ProductCard({ product, onFly }) {
             {product.name_bn}
           </h3>
 
-          {/* E-Commerce Standard Price Section */}
-          <div className="mt-2.5 flex items-baseline flex-wrap gap-x-2 gap-y-1">
+          {/* E-Commerce High-Visibility Price & Unit Section */}
+          <div className="mt-2.5 flex items-center flex-wrap gap-x-2 gap-y-1.5">
+            {/* Active Price */}
             <span className="text-2xl font-black tracking-tight text-emerald-700">
               {formatBanglaCurrency(selectedLinePrice)}
             </span>
 
+            {/* Regular Strikethrough Price */}
             {hasOffer && (
-              <span className="text-lg font-semibold text-slate-600 line-through">
+              <span className="text-sm font-semibold text-black line-through">
                 {formatBanglaCurrency(regularLinePrice)}
               </span>
             )}
 
-            <span className="text-xs font-bold text-slate-400">
+            {/* Highly Noticeable Unit Badge */}
+            <span className="inline-flex items-center px-2 py-0.5 rounded-md text-l font-black bg-emerald-50 text-emerald-800 border border-emerald-200/60 shadow-2xs">
               / {formatBanglaNumber(quantity)} {meta.shortLabel}
             </span>
           </div>
 
-          <p className="text-[11px] text-slate-400 mt-1.5">
+          <p className="text-[11px] text-slate-400 mt-1.5 font-medium">
             বাকি আছে: {formatBanglaNumber(product.stock_quantity)} {meta.shortLabel}
           </p>
         </div>
@@ -171,7 +175,7 @@ function ProductCard({ product, onFly }) {
               value={quantity}
               min={minQuantity}
               step={product.quantity_step}
-              onChange={setQuantity}
+              onChange={(nextQuantity) => setQuantity(roundQuantity(nextQuantity))}
               disabled={!canOrder}
             />
           </div>

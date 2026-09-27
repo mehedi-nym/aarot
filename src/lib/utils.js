@@ -1,7 +1,15 @@
 import { AREA_OPTIONS, ORDER_STATUSES, SELL_TYPES } from './constants';
 
+export const roundQuantity = (value, decimals = 2) => {
+  const numericValue = Number(value);
+  if (!Number.isFinite(numericValue)) return 0;
+
+  const factor = 10 ** decimals;
+  return Math.round((numericValue + Number.EPSILON) * factor) / factor;
+};
+
 export const formatBanglaNumber = (value) =>
-  new Intl.NumberFormat('bn-BD').format(Number(value || 0));
+  new Intl.NumberFormat('bn-BD').format(roundQuantity(value));
 
 export const formatBanglaCurrency = (value) =>
   `৳${formatBanglaNumber(Number(value || 0).toFixed(0))}`;
@@ -36,13 +44,22 @@ export const formatBanglaTime = (timeValue) => {
 
 export const getSellTypeMeta = (sellType) => SELL_TYPES[sellType] || SELL_TYPES.kg;
 
+const getOfferBoundary = (value, endOfDay = false) => {
+  if (!value) return null;
+  const rawValue = String(value);
+  if (/^\d{4}-\d{2}-\d{2}$/.test(rawValue)) {
+    return new Date(`${rawValue}T${endOfDay ? '23:59:59.999' : '00:00:00'}`);
+  }
+  return new Date(value);
+};
+
 export const hasActiveOffer = (product) => {
   const price = Number(product?.price || 0);
   const offerPrice = Number(product?.offer_price || 0);
   const regularPrice = Number(product?.regular_price || 0);
   const now = new Date();
-  const startsAt = product?.offer_starts_at ? new Date(product.offer_starts_at) : null;
-  const endsAt = product?.offer_ends_at ? new Date(product.offer_ends_at) : null;
+  const startsAt = getOfferBoundary(product?.offer_starts_at);
+  const endsAt = getOfferBoundary(product?.offer_ends_at, true);
 
   if (startsAt && startsAt > now) return false;
   if (endsAt && endsAt < now) return false;
@@ -60,24 +77,24 @@ export const getProductPrice = (product) => {
 
 export const getLinePrice = (product, quantity = product?.quantity || 0) => {
   const unitPrice = getProductPrice(product);
-  const numericQuantity = Number(quantity || 0);
+  const numericQuantity = roundQuantity(quantity);
 
   if (product?.sell_type === 'gram') {
-    return (unitPrice * numericQuantity) / 1000;
+    return roundQuantity((unitPrice * numericQuantity) / 1000, 2);
   }
 
-  return unitPrice * numericQuantity;
+  return roundQuantity(unitPrice * numericQuantity, 2);
 };
 
 export const getRegularLinePrice = (product, quantity = product?.quantity || 0) => {
   const regularPrice = Number(product?.regular_price || product?.price || 0);
-  const numericQuantity = Number(quantity || 0);
+  const numericQuantity = roundQuantity(quantity);
 
   if (product?.sell_type === 'gram') {
-    return (regularPrice * numericQuantity) / 1000;
+    return roundQuantity((regularPrice * numericQuantity) / 1000, 2);
   }
 
-  return regularPrice * numericQuantity;
+  return roundQuantity(regularPrice * numericQuantity, 2);
 };
 
 export const getDiscountAmount = (product) => {

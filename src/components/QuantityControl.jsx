@@ -1,11 +1,11 @@
-import { getSellTypeMeta } from '../lib/utils';
+import { getSellTypeMeta, roundQuantity } from '../lib/utils';
 
 function QuantityControl({ sellType, value, onChange, min, step, disabled = false }) {
   const meta = getSellTypeMeta(sellType);
   const resolvedMin = Number(min || meta.min);
   const resolvedStep = Number(step || meta.step);
 
-  const numericValue = Number(value);
+  const numericValue = roundQuantity(value);
   const isMinusDisabled = disabled || numericValue <= resolvedMin;
 
   return (
@@ -24,7 +24,7 @@ function QuantityControl({ sellType, value, onChange, min, step, disabled = fals
       </button>
 
       <span className="min-w-0 truncate px-1 text-center text-xs font-semibold text-ink sm:px-3 sm:text-sm">
-        {value} {meta.shortLabel}
+        {roundQuantity(value)} {meta.shortLabel}
       </span>
 
       <button
@@ -35,7 +35,7 @@ function QuantityControl({ sellType, value, onChange, min, step, disabled = fals
             ? 'text-slate-300'
             : 'text-brand-700 hover:bg-slate-50 active:scale-95'
         }`}
-        onClick={() => onChange(numericValue + resolvedStep)}
+        onClick={() => onChange(roundQuantity(numericValue + resolvedStep))}
       >
         +
       </button>

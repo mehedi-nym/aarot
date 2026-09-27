@@ -158,6 +158,12 @@ function OrderDetailsPage() {
               <h3 className="font-black mb-4 sm:mb-6 opacity-50 uppercase text-[10px] tracking-[0.3em]">Billing Summary</h3>
               <div className="space-y-3 sm:space-y-4 text-xs sm:text-sm font-bold">
                 <div className="flex justify-between text-slate-400"><span>সাব-টোটাল</span><span>{formatBanglaCurrency(order.subtotal)}</span></div>
+                {Number(order.discount_amount) > 0 && (
+                  <div className="flex justify-between text-emerald-600">
+                    <span>ডিসকাউন্ট (<span>কুপন</span>:{order.coupon_used})</span>
+                    <span>- {formatBanglaCurrency(order.discount_amount)}</span>
+                  </div>
+                )}
                 <div className="flex justify-between text-slate-400"><span>ডেলিভারি চার্জ</span><span>{formatBanglaCurrency(order.delivery_charge)}</span></div>
                 <div className="pt-3 sm:pt-4 border-t border-slate-800 flex justify-between items-center">
                   <span className="text-base sm:text-lg">সর্বমোট</span>
@@ -182,6 +188,12 @@ function OrderDetailsPage() {
                   <p className="text-xs sm:text-sm font-bold text-slate-700 leading-relaxed break-words">{order.address_bn}</p>
                   <p className="text-xs font-bold text-emerald-600 mt-1">📍 {order.area_name_bn}</p>
                 </div>
+                {order.customer_note && (
+                  <div className="border-t border-slate-100 pt-4">
+                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">অর্ডার নোট</p>
+                    <p className="text-xs sm:text-sm font-bold leading-relaxed text-slate-700 break-words">{order.customer_note}</p>
+                  </div>
+                )}
               </div>
             </div>
 
